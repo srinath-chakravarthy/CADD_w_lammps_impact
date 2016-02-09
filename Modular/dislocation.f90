@@ -154,8 +154,7 @@
 !
       LOGICAL FUNCTION DISLCHECK(Checkslip,Lostslip,Addedslip,Movedisl,&
      &                           Ix,X,B,Itx,Isrelaxed,Numnp,Ndf,Nxdm,&
-     &                           Numel,Nen1,Newmesh,Plottime,Dislpass,&
-     &                           Npass)
+     &                           Numel,Nen1,Newmesh,Plottime)
       IMPLICIT NONE
 !*--DISLCHECK160
       INTEGER Npass
@@ -163,7 +162,7 @@
       INTEGER Numnp , Ndf , Nxdm , Numel , Nen1
       INTEGER Ix(Nen1,Numel) , Itx(3,Numel) , Isrelaxed(Numnp)
       DOUBLE PRECISION X(Nxdm,Numnp) , B(Ndf,Numnp) , Plottime
-      LOGICAL Dislpass
+
       DISLCHECK = .FALSE.
 !
 !     if we are checking for dislocation passings, proceed, otherwise
@@ -176,7 +175,7 @@
 !     that want to go from continuum to atomistic
 !
          IF ( Movedisl ) THEN
-            CALL LOSTSLIPCHECK(Lostslip,Ix,X,B,Npass)
+            CALL LOSTSLIPCHECK(Lostslip,Ix,X,B)
             IF ( Lostslip ) THEN
                DISLCHECK = .TRUE.
                RETURN
@@ -188,7 +187,7 @@
 !
          IF ( .NOT.Lostslip ) THEN
             CALL SLIPCHECK(X,B,Ix,Itx,Isrelaxed,Numnp,Ndf,Nxdm,Numel,&
-     &                     Nen1,Newmesh,Addedslip,Plottime,Dislpass)
+     &                     Nen1,Newmesh,Addedslip,Plottime)
             Lostslip = .FALSE.
  
             IF ( Addedslip ) THEN
@@ -205,7 +204,7 @@
 !     atomistic region.
 !
       SUBROUTINE SLIPCHECK(X,B,Ix,Itx,Isrelaxed,Numnp,Ndf,Nxdm,Numel,&
-     &                     Nen1,Newmesh,Addedslip,Plottime,Dislpass)
+     &                     Nen1,Newmesh,Addedslip,Plottime)
       USE MOD_DISLOCATION
       USE MOD_FILE
       USE MOD_BOUNDARY
@@ -738,22 +737,22 @@
 !     Check of Detection band polygon is a boundary (dbboundnear))
 !     pass it ony if it is in this polygon
                   IF ( DBBoundnear(idb) ) THEN
+                     CALL FINDENTRYPOINT(bvec,x0,xd,ifactor)
                      IF ( itheta==0 ) THEN
                         ifactor = -1
                      ELSE
                         ifactor = 1
                      ENDIF
-                     islp = 0
-                     s_dis = 0.0D0
-                     CALL FINDENTRYPOINT(bvec,x0,xd,ifactor)
-                     CALL FINDSLIPPLANE(bvec,x0,ifactor,islp,theta_s,&
-     &                                  s_dis,xd,xi)
-!
+                     xd(1:2)=xd(1:2)+20.0d0*ifactor*bvec(1:2)
+
+!!$                     CALL FINDSLIPPLANE(bvec,x0,ifactor,islp,theta_s,&
+!!$     &                                  s_dis,xd,xi)
+
+                     !
 !--   choose location for the "image" dislocation as far from any
 !--   detection bands as possible.
 !
-!$$$                     call FindImageLocation(xi,ifactor,x0,bvec(1:3),
-!$$$     $                    ,nxdm,numnp,numel,nen1)
+                     call FindImageLocation(xi,ifactor,x0,bvec(1:3),ix,x,nxdm,numnp,numel,nen1)
                      theta_e = itheta*PI
                      WRITE (*,*) 'dislocation at ' , x0
                      WRITE (*,*) 'passed to ' , xd
@@ -762,13 +761,10 @@
                      WRITE (*,*) 'and theta_e=' , theta_e
                      WRITE (*,*) 'and theta_s=' , theta_s
  
-                     CALL DISL_PASS(x0,xd,bvec(1:3),theta_e,theta_s,X,B,&
-     &                              Isrelaxed,Numnp,.TRUE.,.TRUE.,0,&
-     &                              islp,s_dis)
-!$$$                     itheta=mod(itheta+1,2)
-!$$$                     theta_e=itheta*PI
-!$$$                     call disl_pass(xi,xi,-bvec(1:3),theta_e,theta_s
-!$$$     $                    ,b,IsRelaxed,numnp,.true.,.true.)
+                     CALL DISL_PASS(x0,xd,bvec(1:3),theta_e,theta_s,X,B,Isrelaxed,Numnp,.TRUE.,.TRUE.)
+                     itheta=mod(itheta+1,2)
+                     theta_e=itheta*PI
+                     call disl_pass(xi,xi,-bvec(1:3),theta_e,theta_s ,b,IsRelaxed,numnp,.true.,.true.)
                      CALL DISL_PRINT(0)
 99001                FORMAT (5E15.6)
                      Dislpass = .TRUE.
@@ -800,8 +796,7 @@
       SUBROUTINE GETELEMENTSTRAIN(B1,B2,B3,Amat,Eps)
       IMPLICIT NONE
 !*--GETELEMENTSTRAIN802
-      DOUBLE PRECISION Amat(3,2) , B1(3) , B2(3) , B3(3) , u(3,3) , &
-     &                 Eps(3,3) , ua(3,3)
+      DOUBLE PRECISION Amat(3,2) , B1(3) , B2(3) , B3(3) , u(3,3) , Eps(3,3) , ua(3,3)
       u(1:3,1) = B1
       u(1:3,2) = B2
       u(1:3,3) = B3
@@ -825,12 +820,9 @@
       INTEGER Iel , Ix(NEN1,*) , Ib , ibest , i
       LOGICAL P(*)
 !
-      DOUBLE PRECISION dx1(3) , dx2(3) , dy1(3) , dy2(3) , norm , del(3)&
-     &                 , normmin , testmin , dz1(3) , dz2(3)
-      dx1 = X(1:3,Ix(2,Iel)) - X(1:3,Ix(1,Iel)) + B(1:3,Ix(2,Iel))&
-     &      - B(1:3,Ix(1,Iel))
-      dx2 = X(1:3,Ix(3,Iel)) - X(1:3,Ix(1,Iel)) + B(1:3,Ix(3,Iel))&
-     &      - B(1:3,Ix(1,Iel))
+      DOUBLE PRECISION dx1(3) , dx2(3) , dy1(3) , dy2(3) , norm , del(3), normmin , testmin , dz1(3) , dz2(3)
+      dx1 = X(1:3,Ix(2,Iel)) - X(1:3,Ix(1,Iel)) + B(1:3,Ix(2,Iel)) - B(1:3,Ix(1,Iel))
+      dx2 = X(1:3,Ix(3,Iel)) - X(1:3,Ix(1,Iel)) + B(1:3,Ix(3,Iel)) - B(1:3,Ix(1,Iel))
       dy1 = X(1:3,Ix(2,Iel)) - X(1:3,Ix(1,Iel))
       dy2 = X(1:3,Ix(3,Iel)) - X(1:3,Ix(1,Iel))
       normmin = 1.E30
@@ -1322,8 +1314,7 @@
 !     InContinuum: check if the point xd is in one of the the continuum
 !     region elements
 !
-      LOGICAL FUNCTION INCONTINUUM(Xd,Ix,X,Nxdm,Numnp,Numel,Nen1,&
-     &                             Inatoms)
+      LOGICAL FUNCTION INCONTINUUM(Xd,Ix,X,Nxdm,Numnp,Numel,Nen1,Inatoms)
       IMPLICIT NONE
 !*--INCONTINUUM1328
       INTEGER Nxdm , Numnp , Numel , Nen1
@@ -1333,8 +1324,7 @@
       INCONTINUUM = .FALSE.
       Inatoms = .FALSE.
       DO i = 1 , Numel
-         in = INTRI(X(1:2,Ix(1,i)),X(1:2,Ix(2,i)),X(1:2,Ix(3,i)),Xd,s,&
-     &        ontri)
+         in = INTRI(X(1:2,Ix(1,i)),X(1:2,Ix(2,i)),X(1:2,Ix(3,i)),Xd,s, ontri)
          IF ( in .OR. ontri ) THEN
             IF ( Ix(Nen1,i)==0 ) THEN
                INCONTINUUM = .TRUE.
@@ -1351,8 +1341,7 @@
 !     FindImageLocation:  figure out where to put the image dislocation
 !     so that it is far away from any continuum regions.
 !
-      SUBROUTINE FINDIMAGELOCATION(Xi,Ifactor,X0,Bmat,Ix,X,Nxdm,Numnp,&
-     &                             Numel,Nen1)
+      SUBROUTINE FINDIMAGELOCATION(Xi,Ifactor,X0,Bmat,Ix,X,Nxdm,Numnp,Numel,Nen1)
       IMPLICIT NONE
 !*--FINDIMAGELOCATION1357
       INTEGER Ifactor , Numel , Nen1 , Numnp , Nxdm
@@ -1613,8 +1602,7 @@
 !     PassToAtomistic.  As the name suggests, come here when we have
 !     found a DD that wants to leave the continuum.
 !
-      SUBROUTINE PASSTOATOMISTIC(R,Rold,Burgers,Te,Ts,Ix,X,B,Lostslip,&
-     &                           Idis_slip)
+      SUBROUTINE PASSTOATOMISTIC(R,Rold,Burgers,Te,Ts,Ix,X,B,Lostslip)
       USE MOD_DISLOCATION
       USE MOD_GLOBAL
       USE MOD_BOUNDARY
@@ -1679,8 +1667,7 @@
             xd(1:2) = xd(1:2) + nshift*ifactor*Burgers(1:2)
             PRINT * , 'Disl. Position in atomistics' , ifactor , xd
             ifactor = -ifactor
-            CALL FINDIMAGELOCATION(xi,ifactor,xd,Burgers,Ix,X,NXDm,&
-     &                             NUMnp,NUMel,NEN1)
+            CALL FINDIMAGELOCATION(xi,ifactor,xd,Burgers,Ix,X,NXDm,NUMnp,NUMel,NEN1)
 !
 !     puts the discrete dislocation as far from the detection bands as
 !     possible
@@ -1692,8 +1679,7 @@
 !
  
             PRINT * , 'Dislocation initially at' , Rold(1:2)
-            CALL DISL_PASS(Rold,xd,Burgers,Te,Ts,X,B,ISRelaxed,NUMnp,&
-     &                     .TRUE.,.FALSE.,Idis_slip)
+            CALL DISL_PASS(Rold,xd,Burgers,Te,Ts,X,B,ISRelaxed,NUMnp,.TRUE.,.FALSE.)
             NEWslip = .TRUE.
             Lostslip = .TRUE.
             WRITE (*,*) 'Dislocation passed to Atomistics'
