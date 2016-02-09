@@ -66,38 +66,39 @@
 !
 !       solve FEM and DD problem
       TINcr = TINCR_SAV
-      IF ( Moved ) TINcr = 1.D-20
-      CALL ASSIGN_DISLOC_GLOBAL
+!!$      IF ( Moved ) TINcr = 1.D-20
+!!$      CALL ASSIGN_DISLOC_GLOBAL
       PRINT * , 'Total dislocations' , NDIsl
       PRINT * , 'Time entering fd_solve is' , Prop
       CALL FD_SOLVE(B,Bc,Prop,Cz,Id,Is_relaxed,rhs,forces,e0)
 !
 !  compute the P.-K. force on dislocations
       IF ( Movedisl ) THEN
-         IF ( NDIsl>0 ) THEN
-            IF ( Ifem==1 ) THEN
-               PRINT * , ' --- Entering Move Disl --'
-                 ! call fd_peach_koeller(rhs)
-               CALL MOVE_DISLOC(rhs)
-               CALL NUCLEATE_DISL(rhs)
-               DTIme_dd = DTIme_dd + TINcr
-               PRINT * , 'Dtime_dd =' , DTIme_dd
-            ELSE
-               TINcr = TINCR_SAV/100.0D0
-               PRINT * , ' --- Entering Move Disl --'
-                 ! call fd_peach_koeller(rhs)
-               CALL MOVE_DISLOC(rhs)
-               CALL NUCLEATE_DISL(rhs)
-               DTIme_dd = DTIme_dd + TINcr
-               PRINT * , 'Dtime_dd =' , DTIme_dd
-!
-            ENDIF
-         ELSEIF ( Ifem==1 ) THEN
-            CALL MOVE_DISLOC(rhs)
-            CALL NUCLEATE_DISL(rhs)
-            DTIme_dd = DTIme_dd + TINcr
-            PRINT * , 'Dtime_dd =' , DTIme_dd
-         ENDIF
+         CALL FD_PEACH_KOEHLER(rhs)
+!!$         IF ( NDIsl>0 ) THEN
+!!$            IF ( Ifem==1 ) THEN
+!!$               PRINT * , ' --- Entering Move Disl --'
+!!$                 ! call fd_peach_koeller(rhs)
+!!$               CALL MOVE_DISLOC(rhs)
+!!$               CALL NUCLEATE_DISL(rhs)
+!!$               DTIme_dd = DTIme_dd + TINcr
+!!$               PRINT * , 'Dtime_dd =' , DTIme_dd
+!!$            ELSE
+!!$               TINcr = TINCR_SAV/100.0D0
+!!$               PRINT * , ' --- Entering Move Disl --'
+!!$                 ! call fd_peach_koeller(rhs)
+!!$               CALL MOVE_DISLOC(rhs)
+!!$               CALL NUCLEATE_DISL(rhs)
+!!$               DTIme_dd = DTIme_dd + TINcr
+!!$               PRINT * , 'Dtime_dd =' , DTIme_dd
+!!$!
+!!$            ENDIF
+!!$         ELSEIF ( Ifem==1 ) THEN
+!!$            CALL MOVE_DISLOC(rhs)
+!!$            CALL NUCLEATE_DISL(rhs)
+!!$            DTIme_dd = DTIme_dd + TINcr
+!!$            PRINT * , 'Dtime_dd =' , DTIme_dd
+!!$         ENDIF
       ENDIF
 !
       DO i = 1 , NFIxed
