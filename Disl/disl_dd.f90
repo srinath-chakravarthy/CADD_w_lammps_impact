@@ -160,14 +160,14 @@
       PRINT * , 'Image Locations'
       PRINT * , 'Subtract =' , R0(1:2)
       PRINT * , 'Image = ' , Rd(1:2)
-!      if (store) call disl_accept(rd, burg, th_e, th_s)
-      IF ( Store ) THEN
-         IF ( nucl ) THEN
-            CALL NUCLEATE_ATOMISTIC_DISL(Islp,S_dis,Th_e,Th_s,Burg)
-         ELSE
-            PRINT * , 'Slip plane num and distance not given to pass'
-         ENDIF
-      ENDIF
+      if (store) call disl_accept(rd, burg, th_e, th_s)
+!!$      IF ( Store ) THEN
+!!$         IF ( nucl ) THEN
+!!$            CALL NUCLEATE_ATOMISTIC_DISL(Islp,S_dis,Th_e,Th_s,Burg)
+!!$         ELSE
+!!$            PRINT * , 'Slip plane num and distance not given to pass'
+!!$         ENDIF
+!!$      ENDIF
       DO i = 1 , Numnp
          IF ( Is_relaxed(i)/=0 ) THEN
             IF ( Subtract ) THEN
