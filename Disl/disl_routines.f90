@@ -103,8 +103,7 @@
       DO i = 1 , NSEgm
          DO j = 1 , 2
             DO k = 1 , NDOF
-               Rhs((ISEgm(j,i)-1)*NDOF+k) = Rhs((ISEgm(j,i)-1)*NDOF+k)&
-     &            - F_segm(k,i)/2.0D0
+               Rhs((ISEgm(j,i)-1)*NDOF+k) = Rhs((ISEgm(j,i)-1)*NDOF+k) - F_segm(k,i)/2.0D0
             ENDDO
          ENDDO
       ENDDO

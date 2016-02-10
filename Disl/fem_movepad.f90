@@ -74,7 +74,7 @@
 !
 !  compute the P.-K. force on dislocations
       IF ( Movedisl ) THEN
-         CALL FD_PEACH_KOEHLER(rhs)
+         CALL FD_PEACH_KOELLER(rhs)
 !!$         IF ( NDIsl>0 ) THEN
 !!$            IF ( Ifem==1 ) THEN
 !!$               PRINT * , ' --- Entering Move Disl --'

@@ -139,11 +139,8 @@
 !           print *, 'no dislocations to print in output file'
 !        endif
       ELSE
-         IF ( ikey<6 .OR. ikey>8 ) CALL DUMPIT(X,Ix,B,Db,Id,F,Dr,scale,&
-     &        logic,key,index,umag)
-         IF ( ikey>=6 .OR. ikey<=8 )&
-     &        CALL DUMPIT_VTK(X,Ix,B,Db,Id,F,Dr,scale,logic,key,index,&
-     &        umag)
+         IF ( ikey<6 .OR. ikey>8 ) CALL DUMPIT(X,Ix,B,Db,Id,F,Dr,scale,logic,key,index,umag)
+         IF ( ikey>=6 .OR. ikey<=8 ) CALL DUMPIT_VTK(X,Ix,B,Db,Id,F,Dr,scale,logic,key,index, umag)
       ENDIF
       CLOSE (logic)
       END SUBROUTINE MA02
@@ -877,23 +874,19 @@
  
  
 !***********************************************************************
-      SUBROUTINE DUMPIT_VTK(X,Ix,B,Db,Id,F,Dr,Scale,Logic,Key,Index,&
-     &                      Umag)
+      SUBROUTINE DUMPIT_VTK(X,Ix,B,Db,Id,F,Dr,Scale,Logic,Key,Index, Umag)
       USE MOD_GLOBAL
       IMPLICIT NONE
 !*--DUMPIT_VTK821
 !
-      DOUBLE PRECISION X(NXDm,*) , B(NDF,*) , Db(NDF,*) , F(NDF,*) , &
-     &                 Dr(NDF,*) , Scale , Umag
+      DOUBLE PRECISION X(NXDm,*) , B(NDF,*) , Db(NDF,*) , F(NDF,*) , Dr(NDF,*) , Scale , Umag
       INTEGER Id(NDF,*) , Ix(NEN1,*) , Index , Logic , numpnts , ntot
       CHARACTER*4 Key
 !
-      INTEGER numtri , i , j , n , NDFMAX , ii , jj , nout , npad , &
-     &        startpad
+      INTEGER numtri , i , j , n , NDFMAX , ii , jj , nout , npad , startpad
       CHARACTER out*100
       PARAMETER (NDFMAX=18)
-      DOUBLE PRECISION dev(6) , xdef , ydef , zdef , hyd , sigeff , y , &
-     &                 epseff
+      DOUBLE PRECISION dev(6) , xdef , ydef , zdef , hyd , sigeff , y , epseff
  
       INTEGER n1 , n2 , n3 , npatoms
       DOUBLE PRECISION det , amat(3,2) , epsloc(3,3) , tarray(3,3)
@@ -902,8 +895,7 @@
       DOUBLE PRECISION , ALLOCATABLE :: virist(:,:) , nstr1(:,:)
       DOUBLE PRECISION dwx1 , dwx2
       DOUBLE PRECISION box_max(2) , box_min(2)
-      DOUBLE PRECISION :: rx1(3) , ud1(3) , b1(3) , b2(3) , b3(3) , &
-     &                    ud2(3) , ud3(3) , rx2(3) , rx3(3)
+      DOUBLE PRECISION :: rx1(3) , ud1(3) , b1(3) , b2(3) , b3(3) , ud2(3) , ud3(3) , rx2(3) , rx3(3)
       DOUBLE PRECISION :: sout1(3) , sout2(3) , sout3(3)
 !     New Variable for vtk
       INTEGER ndf22
@@ -970,8 +962,7 @@
             amat(2,2) = (X(1,n1)-X(1,n3))/det
             amat(3,2) = (X(1,n2)-X(1,n1))/det
 !           ****compute the green strain time 2*****
-            CALL GETELEMENTSTRAIN(b1,b2,b3,amat(1:3,1:2),epsloc(1:3,1:3)&
-     &                            )
+            CALL GETELEMENTSTRAIN(b1,b2,b3,amat(1:3,1:2),epsloc(1:3,1:3))
  
 !$$$            call GetElementStrain(b1,b2,b3,amat(1:3,1:2),epsloc(1:3
 !$$$     $           ,1:3))
@@ -1069,8 +1060,7 @@
          npad = 0
          ntot = 0
          DO i = 1 , NUMnp
-            IF ( ISRelaxed(i)==1 .OR. ISRelaxed(i)==2 .OR. ISRelaxed(i)&
-     &           ==-1 ) THEN
+            IF ( ISRelaxed(i)==1 .OR. ISRelaxed(i)==2 .OR. ISRelaxed(i) ==-1 ) THEN
                IF ( ISRelaxed(i)==-1 ) THEN
                   IF ( npad==0 ) startpad = i
                   npad = npad + 1
@@ -1079,10 +1069,8 @@
                ENDIF
                ntot = ntot + 1
                DO j = 1 , 2
-                  IF ( X(j,i)+Umag*B(j,i)>box_max(j) ) box_max(j)&
-     &                 = X(j,i) + Umag*B(j,i)
-                  IF ( X(j,i)+Umag*B(j,i)<box_min(j) ) box_min(j)&
-     &                 = X(j,i) + Umag*B(j,i)
+                  IF ( X(j,i)+Umag*B(j,i)>box_max(j) ) box_max(j) = X(j,i) + Umag*B(j,i)
+                  IF ( X(j,i)+Umag*B(j,i)<box_min(j) ) box_min(j)  = X(j,i) + Umag*B(j,i)
                ENDDO
             ENDIF
          ENDDO
@@ -1097,12 +1085,10 @@
          WRITE (Logic,FMT='(A)') '# vtk DataFile Version 2.0'
          IF ( Key=='stra' ) WRITE (Logic,FMT='(A)') 'Strains from CADD'
          IF ( Key=='stre' ) WRITE (Logic,FMT='(A)') 'Stresses from CADD'
-         IF ( Key=='viri' ) WRITE (Logic,FMT='(A)')&
-     &                              'Virial Stresses from CADD'
+         IF ( Key=='viri' ) WRITE (Logic,FMT='(A)') 'Virial Stresses from CADD'
          WRITE (Logic,FMT='(A)') 'ASCII'
          WRITE (Logic,FMT='(A)') 'DATASET UNSTRUCTURED_GRID'
-         WRITE (Logic,FMT='(A6,1x,I7,1x,A5)') 'POINTS' , numpnts , &
-     &          'float'
+         WRITE (Logic,FMT='(A6,1x,I7,1x,A5)') 'POINTS' , numpnts ,'float'
          DO i = 1 , numpnts
  
             xdef = X(1,i) + Umag*B(1,i)
@@ -1114,8 +1100,7 @@
          WRITE (Logic,'(A5,1X,I7,1X,I7)') 'CELLS' , NUMel , 4*numtri
  
          DO n = 1 , NUMel
-            WRITE (Logic,'(4i6)') 3 , Ix(1,n) - 1 , Ix(2,n) - 1 , &
-     &                            Ix(3,n) - 1
+            WRITE (Logic,'(4i6)') 3 , Ix(1,n) - 1 , Ix(2,n) - 1 , Ix(3,n) - 1
          ENDDO
          WRITE (Logic,*)
  

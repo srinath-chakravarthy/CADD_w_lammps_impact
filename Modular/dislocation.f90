@@ -186,8 +186,7 @@
 !     atomistic to continumm
 !
          IF ( .NOT.Lostslip ) THEN
-            CALL SLIPCHECK(X,B,Ix,Itx,Isrelaxed,Numnp,Ndf,Nxdm,Numel,&
-     &                     Nen1,Newmesh,Addedslip,Plottime)
+            CALL SLIPCHECK(X,B,Ix,Itx,Isrelaxed,Numnp,Ndf,Nxdm,Numel,Nen1,Newmesh,Addedslip,Plottime)
             Lostslip = .FALSE.
  
             IF ( Addedslip ) THEN
@@ -737,7 +736,7 @@
 !     Check of Detection band polygon is a boundary (dbboundnear))
 !     pass it ony if it is in this polygon
                   IF ( DBBoundnear(idb) ) THEN
-                     CALL FINDENTRYPOINT(bvec,x0,xd,ifactor)
+                     CALL FINDENTRYPOINT(bvec,x0,xd)
                      IF ( itheta==0 ) THEN
                         ifactor = -1
                      ELSE

@@ -441,8 +441,8 @@
             ENDIF
          ENDIF
       ENDDO
-!	Entry point in continuum/pad region is found
-      Xd(1:2) = Xd(1:2) + 2.0D0*Ifactor*B(1:2)
+!!$	Entry point in continuum/pad region is found
+!!$      Xd(1:2) = Xd(1:2) + 2.0D0*Ifactor*B(1:2)
 !
       END SUBROUTINE FINDENTRYPOINT
 !*==sliprange.spg  processed by SPAG 6.70Rc at 12:39 on 29 Oct 2015
