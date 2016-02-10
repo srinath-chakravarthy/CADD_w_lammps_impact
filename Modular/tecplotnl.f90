@@ -134,12 +134,13 @@
          PRINT * , 'Total no. of dislocations = ' , NDIsl
 !        if (ndisl > 0 .or. nprint .eq. 0) then
 !         if (ndisl > 0) then
-         CALL DUMPDISL_VTK(scale,logic,umag,B,NDF)
+!         CALL DUMPDISL_VTK(scale,logic,umag,B,NDF)
 !         else
 !           print *, 'no dislocations to print in output file'
 !        endif
       ELSE
          IF ( ikey<6 .OR. ikey>8 ) CALL DUMPIT(X,Ix,B,Db,Id,F,Dr,scale,logic,key,index,umag)
+!!$         print *, 'IX =========================================', ix(1,1), ix(2,1), ix(3,1)
          IF ( ikey>=6 .OR. ikey<=8 ) CALL DUMPIT_VTK(X,Ix,B,Db,Id,F,Dr,scale,logic,key,index, umag)
       ENDIF
       CLOSE (logic)
@@ -1216,8 +1217,7 @@
       WRITE (Logic,'(A5,1X,I7,1X,I7)') 'CELLS' , NUMel , 4*numtri
  
       DO n = 1 , NUMel
-         WRITE (Logic,'(4i6)') 3 , Ix(1,n) - 1 , Ix(2,n) - 1 , Ix(3,n)&
-     &                         - 1
+         WRITE (Logic,'(4i6)') 3 , Ix(1,n) - 1 , Ix(2,n) - 1 , Ix(3,n)- 1
       ENDDO
       WRITE (Logic,*)
  

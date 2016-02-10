@@ -346,6 +346,7 @@
             WRITE (*,*) 'setting up the discrete dislocation solver'
             WRITE (*,*)
             CALL BANDNL(Id,X,Ix,F,B)
+!!$            write(*, '(A,3I7)')'IX after bandwidth ==============================', ix(1,1), ix(2,1), ix(3,1)
             call map_from_lammps(x, id,lmp)
             qrot = 0.D0
             IF ( NGRains/=1 ) STOP 'hardwired here for 1 grain'
@@ -362,9 +363,8 @@
                WRITE (*,'(6e13.4)') cc2(i,1:6)
             ENDDO
             ALLOCATE (itemp1(NUMnp),itemp2(NUMel))
-            CALL FEM_SETUP(NUMnp,NUMel,X,Id,ISRelaxed,Ix,Itx,cc2,itemp1,&
-     &                     itemp2)
- 
+            CALL FEM_SETUP(NUMnp,NUMel,X,Id,ISRelaxed,Ix,Itx,cc2,itemp1,itemp2)
+!!$	    write(*, '(A,3I7)')'IX after femsetup ==============================', ix(1,1), ix(2,1), ix(3,1)
             DEALLOCATE (itemp1,itemp2)
             CALL DISL_SETUP
             ! ---- Updates any initial config of atoms
@@ -473,12 +473,15 @@
 !---- macro 'ma01'
 !---- user supplied macro - boundary conditions/loading
             CALL MA01(Id,X,Ix,F,B,Dr,Db,ct(2,l))
+!!$            write(*, '(A,3I7)')'IX after ma01 ==============================', ix(1,1), ix(2,1), ix(3,1)
             GOTO 500
          CASE (15)
 !
 !---- macro 'ma02'
 !---- user supplied macro - tecplot files
+!!$	    write(*, '(A,3I7)')'IX before ma01 ==============================', ix(1,1), ix(2,1), ix(3,1)
             CALL MA02(Id,X,Ix,F,B,Dr,Db,ct(2,l),flag02)
+!!$            write(*, '(A,3I7)')'IX after ma02 ==============================', ix(1,1), ix(2,1), ix(3,1)
             GOTO 500
          CASE (16)
 !

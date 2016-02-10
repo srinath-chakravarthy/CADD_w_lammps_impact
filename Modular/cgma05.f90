@@ -40,11 +40,14 @@
  
       edd = 0
       CALL INITIALISEENERGY(.TRUE.,.TRUE.,Id,Dr,F)
-!      print *, 'Ifem in VafuncMD is', iFem
+      !      print *, 'Ifem in VafuncMD is', iFem
+      write(*, '(A,3I7)')'IX before fem_movepad ==============================', ix(1,1), ix(2,1), ix(3,1)
       CALL FEM_MOVE_PAD(X,B,Ix,F,TIMe,Z_Length,Id,ISRelaxed,edd,Dr,&
      &                  Fullfield,Movedisl,Straine0,NUMel,AVEvirst,&
      &                  SYStemp,Ifem,MOVed)
-!
+      write(*, '(A,3I7)')'IX before fem_movepad ==============================', ix(1,1), ix(2,1), ix(3,1)
+
+      !
 !     initialize
 !
 !CCCC
@@ -123,10 +126,14 @@
  
 !!$      CALL DOSTEPS(n,B,Dr,Db,ener,tolm,iprint,dsmax,rseed,dfn,Id,X,Ix,F,&
 !!$     &             Itx,.TRUE.,addedslip,lostslip,.TRUE.,.TRUE.)
-!!$ 
+!!$
+!!$      write(*, '(A,3I7)')'IX before dosteps ==============================', ix(1,1), ix(2,1), ix(3,1)
+
+      
       CALL DOSTEPS_lammps(n,B,Dr,Db,ener,tolm,iprint,dsmax,rseed,dfn,Id,X,Ix,F,&
      &             Itx,.TRUE.,addedslip,lostslip,.TRUE.,.TRUE.,lmp)
- 
+!!$       write(*, '(A,3I7)')'IX  after fem_movepad ==============================', ix(1,1), ix(2,1), ix(3,1)
+
  
  
       CALL CPU_TIME(CT3)

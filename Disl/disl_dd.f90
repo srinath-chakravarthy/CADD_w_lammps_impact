@@ -129,7 +129,7 @@
  
  
       SUBROUTINE DISL_PASS(R0,Rd,Burg,Th_e,Th_s,X,B,Is_relaxed,Numnp,&
-     &                     Subtract,Store,Idis_slip,Islp,S_dis)
+     &                     Subtract,Store,Idis_slip)
  
 !
 !     given location x and xd and the burg/theta of a dislocation,
@@ -148,15 +148,10 @@
       DOUBLE PRECISION u(3) , ud(3)
       INTEGER i , j
       INTEGER , OPTIONAL :: Idis_slip
-      INTEGER , OPTIONAL :: Islp
-      DOUBLE PRECISION , OPTIONAL :: S_dis
+!!$      INTEGER , OPTIONAL :: Islp
+!!$      DOUBLE PRECISION , OPTIONAL :: S_dis
 !
-      IF ( PRESENT(Islp) .AND. PRESENT(S_dis) ) THEN
-         nucl = .TRUE.
-      ELSE
-         nucl = .FALSE.
-      ENDIF
- 
+
       PRINT * , 'Image Locations'
       PRINT * , 'Subtract =' , R0(1:2)
       PRINT * , 'Image = ' , Rd(1:2)
@@ -184,9 +179,6 @@
          ENDIF
       ENDDO
 !     if (.not. store) then
-      IF ( PRESENT(Idis_slip) ) THEN
-         IF ( Idis_slip>0 ) CALL REMOVE_DISL_GLOBAL(Idis_slip)
-      ENDIF
 !     endif
       END SUBROUTINE DISL_PASS
 !*==fd_no_disl.spg  processed by SPAG 6.70Rc at 12:39 on 29 Oct 2015

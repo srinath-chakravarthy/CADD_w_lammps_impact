@@ -173,7 +173,9 @@
 !     only check for dislocations leaving the continuum if the
 !     dislocations are mobile.  Lostslipcheck looks for dislocations
 !     that want to go from continuum to atomistic
-!
+         !
+!!$         write(*, '(A,3I7)')'IX before lostslip_check ==============================', ix(1,1), ix(2,1), ix(3,1)
+
          IF ( Movedisl ) THEN
             CALL LOSTSLIPCHECK(Lostslip,Ix,X,B)
             IF ( Lostslip ) THEN
@@ -181,10 +183,14 @@
                RETURN
             ENDIF
          ENDIF
-!
+!!$         write(*, '(A,3I7)')'IX after lostslip_check ==============================', ix(1,1), ix(2,1), ix(3,1)
+
+         !
 !     check detection band for dislocations that want to go from
 !     atomistic to continumm
 !
+!!$         write(*, '(A,3I7)')'IX before lostslip_check ==============================', ix(1,1), ix(2,1), ix(3,1)
+
          IF ( .NOT.Lostslip ) THEN
             CALL SLIPCHECK(X,B,Ix,Itx,Isrelaxed,Numnp,Ndf,Nxdm,Numel,Nen1,Newmesh,Addedslip,Plottime)
             Lostslip = .FALSE.
@@ -194,6 +200,8 @@
                RETURN
             ENDIF
          ENDIF
+!!$         write(*, '(A,3I7)')'IX after slip_check ==============================', ix(1,1), ix(2,1), ix(3,1)
+
       ENDIF
       END FUNCTION DISLCHECK
 !*==slipcheck.spg  processed by SPAG 6.70Rc at 12:39 on 29 Oct 2015
@@ -1557,7 +1565,7 @@
 !     atom/continuum interface and new free surfaces.
 !
  
-      SUBROUTINE LOSTSLIPCHECK(Lostslip,Ix,X,B,Npass)
+      SUBROUTINE LOSTSLIPCHECK(Lostslip,Ix,X,B)
       USE MOD_DISL_PARAMETERS
       IMPLICIT NONE
 !*--LOSTSLIPCHECK1575

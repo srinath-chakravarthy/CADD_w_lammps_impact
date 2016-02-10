@@ -121,7 +121,7 @@
       INTEGER MAXATOMS
       PARAMETER (MAXATOMS=1000000)
 !
-      INTEGER N , Ix(*) , Atomid(NDF,*) , Iprint , Itx(*) , Rseed , &
+      INTEGER N , Ix(nen1, *) , Atomid(NDF,*) , Iprint , Itx(*) , Rseed , &
      &        numdis , numh
       DOUBLE PRECISION Atomdispl(NDF,NUMnp) , Db(N) , Atomforce(3,*) , &
      &                 Fl , Epps , Dsmax , Dfn , Atomcoord(NDF,*) , &
@@ -429,6 +429,8 @@
 
             ENDIF
             dislpass = .FALSE.
+!!$            write(*, '(A,3I7)')'IX before disl_check ==============================', ix(1,1), ix(2,1), ix(3,1)
+
             IF ( DISLCHECK(Checkslip,Lostslip,Addedslip,Movedisl,Ix,&
                  &        Atomcoord,Atomdispl,Itx,ISRelaxed,NUMnp,NDF,NXDm,NUMel,&
                  &        NEN1,NEWmesh,plottime,dislpass,npass) ) THEN
@@ -443,6 +445,8 @@
                WRITE (*,*) 'Disl checked by rank' , RANk
                ndis_checked = ndis_checked + 1
             END IF
+!!$            write(*, '(A,3I7)')'IX after disl_check ==============================', ix(1,1), ix(2,1), ix(3,1)
+
             nnsteps = nnsteps + 1
 !!$	  if (Moved) then
 !!$       Output the new_atom config after moving atom_displacements
