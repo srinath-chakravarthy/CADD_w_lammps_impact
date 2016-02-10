@@ -129,7 +129,7 @@
  
  
       SUBROUTINE DISL_PASS(R0,Rd,Burg,Th_e,Th_s,X,B,Is_relaxed,Numnp,&
-     &                     Subtract,Store,Idis_slip)
+     &                     Subtract,Store)
  
 !
 !     given location x and xd and the burg/theta of a dislocation,
@@ -147,7 +147,7 @@
 !
       DOUBLE PRECISION u(3) , ud(3)
       INTEGER i , j
-      INTEGER , OPTIONAL :: Idis_slip
+!!$      INTEGER , OPTIONAL :: Idis_slip
 !!$      INTEGER , OPTIONAL :: Islp
 !!$      DOUBLE PRECISION , OPTIONAL :: S_dis
 !
