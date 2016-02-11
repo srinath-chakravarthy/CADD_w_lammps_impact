@@ -157,7 +157,7 @@
               write(1010,fmt='(I7,1X,I3,1X,3(1X,F15.8))') n, atomType, X(1,i), X(2,i), 0.0
            end if
         end do
-        stadium_ymax = stadium_width
+        stadium_ymax = 2.0d0*stadium_width
         write(1010,*)
         close(1010)
       end subroutine write_lammps_data
@@ -336,7 +336,7 @@
         !call lammps_command(lmp,"thermo_style custom step c_free_temp c_pe c_stadium_temp v_tot_energy v_y")
         
         ! --------- Compute differential displacement from original position
-        call lammps_command(lmp, "compute dx_free free_atoms displace/atom")
+        call lammps_command(lmp, "compute dx_free md_atoms displace/atom")
 
         call lammps_command(lmp, "compute dx_all all displace/atom")
 
@@ -355,16 +355,16 @@
 
 
         ! ---- Compute used for virial stress on atoms
-        call lammps_command(lmp, "compute compute_stress free_atoms stress/atom NULL virial")
+        call lammps_command(lmp, "compute compute_stress md_atoms stress/atom NULL virial")
         
        
         ! ----- Now define a fix to actually calculate the stress average for all atoms
-        call lammps_command(lmp, "fix stress_ave_xx free_atoms ave/atom 1 25 25 c_compute_stress[1]")
-        call lammps_command(lmp, "fix stress_ave_yy free_atoms ave/atom 1 25 25 c_compute_stress[2]")
-        call lammps_command(lmp, "fix stress_ave_zz free_atoms ave/atom 1 25 25 c_compute_stress[3]")
-        call lammps_command(lmp, "fix stress_ave_xy free_atoms ave/atom 1 25 25 c_compute_stress[4]")
-        call lammps_command(lmp, "fix stress_ave_zx free_atoms ave/atom 1 25 25 c_compute_stress[5]")
-        call lammps_command(lmp, "fix stress_ave_yz free_atoms ave/atom 1 25 25 c_compute_stress[6]")
+        call lammps_command(lmp, "fix stress_ave_xx md_atoms ave/atom 1 25 25 c_compute_stress[1]")
+        call lammps_command(lmp, "fix stress_ave_yy md_atoms ave/atom 1 25 25 c_compute_stress[2]")
+        call lammps_command(lmp, "fix stress_ave_zz md_atoms ave/atom 1 25 25 c_compute_stress[3]")
+        call lammps_command(lmp, "fix stress_ave_xy md_atoms ave/atom 1 25 25 c_compute_stress[4]")
+        call lammps_command(lmp, "fix stress_ave_zx md_atoms ave/atom 1 25 25 c_compute_stress[5]")
+        call lammps_command(lmp, "fix stress_ave_yz md_atoms ave/atom 1 25 25 c_compute_stress[6]")
 
         call lammps_extract_global(xlo, lmp, 'boxxlo')
         call lammps_extract_global(xhi, lmp, 'boxxhi')
@@ -373,7 +373,7 @@
 
 
         ! ---- Dump data file 
-        write(command_line, '(A18,I3,A74)') "dump 1 all custom ", lammps_output_steps, " atom_lmp*.cfg id type x y z c_dx_all[1] c_dx_all[2] fx fy fz c_dx_all[4]"
+        write(command_line, '(A18,I3,A86)') "dump 1 all custom ", fem_update_steps, " atom_lmp*.cfg id type x y z c_dx_all[1] c_dx_all[2] vx vy vz c_dx_all[4] f_fix_temp"
         call lammps_command(lmp, command_line)
 !!$        call lammps_command(lmp, "dump 1 all custom 200 atom_lmp*.cfg id type x y z c_dx_all[1] c_dx_all[2] fx fy fz")       
         

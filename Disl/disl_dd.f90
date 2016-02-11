@@ -128,8 +128,7 @@
  
  
  
-      SUBROUTINE DISL_PASS(R0,Rd,Burg,Th_e,Th_s,X,B,Is_relaxed,Numnp,&
-     &                     Subtract,Store)
+      SUBROUTINE DISL_PASS(R0,Rd,Burg,Th_e,Th_s,X,B,Is_relaxed,Numnp, Subtract,Store)
  
 !
 !     given location x and xd and the burg/theta of a dislocation,
