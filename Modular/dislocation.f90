@@ -590,7 +590,7 @@
 !     same strain matrix.  checkburgers chooses the b that
 !     produces the best fit with the rotation of the element
 !
-                  CALL CHECKBURGERS(EPSloc(1:3,1:3,i),
+                  CALL CHECKBURGERS(EPSloc(1:3,1:3,i), &
      &                              POSsible(1:NBUrger,i),IBUrg(i),X,B,&
      &                              Ix,IMAp(i),ENOrm)
  
@@ -672,7 +672,7 @@
 !     produces the best fit with the rotation of the element
 !
                CALL CHECKBURGERS(EPSloc(1:3,1:3,i),POSsible(1:NBUrger,i),IBUrg(i),X,B,Ix,IMAp(i),ENOrm)
-               WRITE (*,'(A)') 'slip found in element' , IMAp(i), ABS(Ix(Nen1,IMAp(i))) , ELIdb(i) , NDBpoly , ' :'
+               WRITE (*,'(A,5I7,A)') 'slip found in element' , IMAp(i), I, ABS(Ix(Nen1,IMAp(i))) , ELIdb(i) , NDBpoly , ' :'
 !$$$               write(*,*) x(1:2,ix(1,imap(i))),b(1:3,ix(1,imap(i)))
 !$$$               write(*,*) x(1:2,ix(2,imap(i))),b(1:3,ix(2,imap(i)))
 !$$$               write(*,*) x(1:2,ix(3,imap(i))),b(1:3,ix(3,imap(i)))
@@ -754,17 +754,17 @@
 !
                      call FindImageLocation(xi,ifactor,x0,bvec(1:3),ix,x,nxdm,numnp,numel,nen1)
                      theta_e = itheta*PI
-                     WRITE (*,*) 'dislocation at ' , x0
-                     WRITE (*,*) 'passed to ' , xd
-                     WRITE (*,*) 'Image Location' , xi
-                     WRITE (*,*) 'with b=' , bvec(1:3)
-                     WRITE (*,*) 'and theta_e=' , theta_e
-                     WRITE (*,*) 'and theta_s=' , theta_s
+                     WRITE (*,'(3F15.6)') 'dislocation at ' , x0
+                     WRITE (*,'(3F15.6)') 'passed to ' , xd
+                     WRITE (*,'(3F15.6)') 'Image Location' , xi
+                     WRITE (*,'(3F15.6)') 'with b=' , bvec(1:3)
+                     WRITE (*,'(F15.6)') 'and theta_e=' , theta_e
+                     WRITE (*,'(F15.6)') 'and theta_s=' , theta_s
  
                      CALL DISL_PASS(x0,xd,bvec(1:3),theta_e,theta_s,X,B,Isrelaxed,Numnp,.TRUE.,.TRUE.)
                      itheta=mod(itheta+1,2)
                      theta_e=itheta*PI
-                     call disl_pass(xi,xi,-bvec(1:3),theta_e,theta_s ,b,IsRelaxed,numnp,.true.,.true.)
+                     call disl_pass(xi,xi,-bvec(1:3),theta_e,theta_s,X,B,IsRelaxed,numnp,.true.,.true.)
                      CALL DISL_PRINT(0)
 99001                FORMAT (5E15.6)
                      Dislpass = .TRUE.
