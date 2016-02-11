@@ -77,7 +77,9 @@
 !-- IsRelaxed=2: interface
 !
       ISRelaxed(1:NUM2dnode) = -1
-!
+      !
+!$OMP_PARALLEL      
+!$OMP_DO      
       DO i = 1 , NUM2dnode
          first = .TRUE.
          DO j = 1 , NUMel
@@ -105,13 +107,16 @@
                         EXIT
                      ELSE
                         ISRelaxed(i) = 2
-                        GOTO 100
+                        CYCLE
                      ENDIF
                   ENDIF
                ENDIF
             ENDDO
          ENDDO
- 100  ENDDO
+      ENDDO
+!$OMP END DO
+!$OMP_PARALLEL      
+      
       IF ( NUMnpp1>NUMnp ) ISRelaxed(NUMnpp1) = 1
  
       IF ( Silent ) RETURN
