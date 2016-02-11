@@ -128,8 +128,7 @@
  
  
  
-      SUBROUTINE DISL_PASS(R0,Rd,Burg,Th_e,Th_s,X,B,Is_relaxed,Numnp,&
-     &                     Subtract,Store,Idis_slip)
+      SUBROUTINE DISL_PASS(R0,Rd,Burg,Th_e,Th_s,X,B,Is_relaxed,Numnp,Subtract,Store)
  
 !
 !     given location x and xd and the burg/theta of a dislocation,
@@ -147,14 +146,14 @@
 !
       DOUBLE PRECISION u(3) , ud(3)
       INTEGER i , j
-      INTEGER , OPTIONAL :: Idis_slip
+!!$      INTEGER , OPTIONAL :: Idis_slip
 !!$      INTEGER , OPTIONAL :: Islp
 !!$      DOUBLE PRECISION , OPTIONAL :: S_dis
 !
 
-      PRINT * , 'Image Locations'
-      PRINT * , 'Subtract =' , R0(1:2)
-      PRINT * , 'Image = ' , Rd(1:2)
+!       PRINT * , 'Image Locations'
+!       PRINT * , 'Subtract =' , R0(1:2)
+!       PRINT * , 'Image = ' , Rd(1:2)
       if (store) call disl_accept(rd, burg, th_e, th_s)
 !!$      IF ( Store ) THEN
 !!$         IF ( nucl ) THEN

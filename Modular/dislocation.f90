@@ -45,8 +45,7 @@
       IMPLICIT NONE
 !*--MOD_DISLOCATION46
       INTEGER nburger , nslip
-      DOUBLE PRECISION , ALLOCATABLE :: utilde(:,:) , epsloc(:,:,:) , &
-     &                                  amat(:,:,:) , enorm(:)
+      DOUBLE PRECISION , ALLOCATABLE :: utilde(:,:) , epsloc(:,:,:) , amat(:,:,:) , enorm(:)
       INTEGER , ALLOCATABLE :: imap(:) , iburg(:)
       LOGICAL , ALLOCATABLE :: possible(:,:)
       LOGICAL newslip
@@ -591,7 +590,7 @@
 !     same strain matrix.  checkburgers chooses the b that
 !     produces the best fit with the rotation of the element
 !
-                  CALL CHECKBURGERS(EPSloc(1:3,1:3,i),&
+                  CALL CHECKBURGERS(EPSloc(1:3,1:3,i),
      &                              POSsible(1:NBUrger,i),IBUrg(i),X,B,&
      &                              Ix,IMAp(i),ENOrm)
  
@@ -665,19 +664,15 @@
 !
 !     recompute enorms
 !
-               CALL FINDBURGERS(EPSloc(1:3,1:3,i),POSsible(1:NBUrger,i),&
-     &                          IBUrg(i),ndisl,ENOrm)
+               CALL FINDBURGERS(EPSloc(1:3,1:3,i),POSsible(1:NBUrger,i),IBUrg(i),ndisl,ENOrm)
 !
 !     resolve degeneracies - sometimes 2 or more dislocations produce
 !     the
 !     same strain matrix.  checkburgers chooses the b that
 !     produces the best fit with the rotation of the element
 !
-               CALL CHECKBURGERS(EPSloc(1:3,1:3,i),POSsible(1:NBUrger,i)&
-     &                           ,IBUrg(i),X,B,Ix,IMAp(i),ENOrm)
-               WRITE (*,*) 'slip found in element' , IMAp(i) , &
-     &                     ABS(Ix(Nen1,IMAp(i))) , ELIdb(i) , NDBpoly , &
-     &                     ' :'
+               CALL CHECKBURGERS(EPSloc(1:3,1:3,i),POSsible(1:NBUrger,i),IBUrg(i),X,B,Ix,IMAp(i),ENOrm)
+               WRITE (*,'(A)') 'slip found in element' , IMAp(i), ABS(Ix(Nen1,IMAp(i))) , ELIdb(i) , NDBpoly , ' :'
 !$$$               write(*,*) x(1:2,ix(1,imap(i))),b(1:3,ix(1,imap(i)))
 !$$$               write(*,*) x(1:2,ix(2,imap(i))),b(1:3,ix(2,imap(i)))
 !$$$               write(*,*) x(1:2,ix(3,imap(i))),b(1:3,ix(3,imap(i)))
@@ -685,8 +680,7 @@
 !$$$               write(*,*) 'strain matrix:'
 !$$$               write(*,'(3e15.6)') (epsloc(j,1:3,i),j=1,3)
 !$$$               write(*,*)
-               WRITE (*,*) 'burgers vector:' , IBUrg(i) , &
-     &                     BURg(1:3,IBUrg(i))
+               WRITE (*,'(A, I3, 3F15.6)') 'burgers vector:' , IBUrg(i) , BURg(1:3,IBUrg(i))
  
 !
 !     process the dislocation:  determine its location, the direction of
@@ -713,8 +707,7 @@
                   kp1 = Ix(kp1,IMAp(i))
                   kp2 = Ix(kp2,IMAp(i))
                   cvec = (X(1:2,k)+X(1:2,kp1)-2*X(1:2,kp2))/6.D0
-                  cross = NORmal(1,IBUrg(i))*cvec(2)&
-     &                    - NORmal(2,IBUrg(i))*cvec(1)
+                  cross = NORmal(1,IBUrg(i))*cvec(2) - NORmal(2,IBUrg(i))*cvec(1)
                   IF ( cross<0.D0 ) THEN
                      bvec = -BURg(1:3,IBUrg(i))
                   ELSE
@@ -777,16 +770,14 @@
                      Dislpass = .TRUE.
                   ENDIF
                ELSE
-                  WRITE (*,*) &
-     &                  'warning: slip in an element on the interior of'
+                  WRITE (*,*) 'warning: slip in an element on the interior of'
                   WRITE (*,*) '       the detection band'
                ENDIF
             ENDIF
          ENDDO
          IF ( numnew==0 ) STOP 'ERROR: couldn''t resolve dislocations'
          filename = 'out/detection.plt'
-         CALL PLOTDISP(X,B,Ix,Numel,Numnp,Nen1,Ndf,Nxdm,Isrelaxed,&
-     &                 filename)
+         CALL PLOTDISP(X,B,Ix,Numel,Numnp,Nen1,Ndf,Nxdm,Isrelaxed,filename)
       ENDIF
  
 !
