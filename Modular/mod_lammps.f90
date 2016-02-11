@@ -71,8 +71,6 @@ contains
     if (C_ASSOCIATED(lmp)) then
        ! ---- Obtain pointers to internal lammps data ---- 
        call lammps_extract_atom(lammps_coord, lmp, 'x')
-!!$       print *, 'Size of CADD domain = ', size(x), shape(x)
-
        ! ---- Create mapping to CADD -----------
        n_lammps_atoms = size(lammps_coord,2)
        allocate(cadd_lammps_map(n_lammps_atoms))
@@ -85,11 +83,7 @@ contains
        cadd_lammps_map = -HUGE(kind4int)
        lammps_cadd_map = -HUGE(kind4int)
        
-!!$       print *, 'Size of arrays = ', size(cadd_lammps_map), size(lammps_cadd_map)
-!!$
-!!$       print *, 'Number of Lammps Atoms = ', n_lammps_atoms
        do catom = 1, numnp
-!!$          print *,"Lammps coord = ", lammps_coord(1,iatom), lammps_coord(2,iatom)
 	  if (isRelaxed(catom) /= 0) then 
 	    do iatom = 1, n_lammps_atoms
                 if (abs(lammps_coord(1,iatom)-x(1, catom)) < tol) then
@@ -99,7 +93,6 @@ contains
                    end if
                 end if
 	    end do
-!!$          print *, 'Done mapping atom ', iatom, cadd_lammps_map(iatom)
 	end if
        end do
     end if
@@ -187,34 +180,6 @@ contains
     allocate(rcoords(3,natoms))
     rcoords = reshape(r,shape(rcoords))
 
-
-    !print*,'before type gather'
-
-    ! --- collecting the types of each atom in lammps
-    ! --- so we can ignore the indenter atoms
-    !call lammps_gather_atoms(lmp,'type',1,types)
-
-   ! print*,'printing out types'
-
-    !do iatom = 1,natoms
-    !  print*,'atom ',iatom,' type ', types(iatom)
-    !  print*,'atom ',iatom,' xpos ', rcoords(1,iatom)
-    !enddo
-
-    print*,'--------lammps_cadd_gmap--------'
-    print*,'size lammps_cadd_gmap', size(lammps_cadd_gmap)
-
-    !do iatom = 1, numnp
-    !   print*,'lmp_atom', lammps_cadd_gmap(iatom)
-    !end do
-
-    print*,'--------lammps_cadd_map--------'
-    print*,'size lammps_cadd_map', size(lammps_cadd_map)
-    
-    !do iatom = 1, numnp
-    !   print*,'lmp_atom', lammps_cadd_map(iatom)
-    !end do
-
     minlmpatom = 5000000
     maxlmpatom = -5000000
     
@@ -231,42 +196,10 @@ contains
 			update_def = (isrelaxed(iAtom) == -1)
 		end if
 	   
-!	    if (update_pad) then
-!			update_def = (isrelaxed(iAtom) == -1)
-!	    end if
-		
 	    if (update_def) then 
- 			   lmpatom = lammps_cadd_gmap(iatom)
-! 			   if (lmpatom > maxlmpatom) then 
-! 			    maxlmpatom = lmpatom
-! 			  end if
-! 			  if (lmpatom < minlmpatom) then 
-! 			    minlmpatom = lmpatom
-! 			  end if
-	
-!         print*,'lmpatom update_def', lmpatom
-         !if (lmpatom >= 1 .AND. lmpatom <= natoms) then
-			      rcoords(1,lmpatom) = atomcoord(1,iatom) + atomdispl(1,iatom)
-			      rcoords(2,lmpatom) = atomcoord(2,iatom) + atomdispl(2,iatom)
-         !end if
-! 			  if (rcoords(1,lmpatom) < min_coordx) then 
-! 			    min_coordx = rcoords(1,lmpatom)
-! 			  end if
-! 			  
-! 			  if (rcoords(2,lmpatom) < min_coordy) then 
-! 			    min_coordy = rcoords(2,lmpatom)
-! 			  end if
-! 
-! 			  if (rcoords(1,lmpatom) > max_coordx) then 
-! 			    max_coordx = rcoords(1,lmpatom)
-! 			  end if
-! 			  
-! 			  if (rcoords(2,lmpatom) > max_coordy) then 
-! 			    max_coordy = rcoords(2,lmpatom)
-! 			  end if
-! 			  write(*, '(A,2I7,4(1X,F15.6))') 'X-coord ', iatom, lmpatom, atomcoord(1,iatom), AtomDispl(1,iaTom), rcoords(1,lmpatom)
-! 			  write(*, '(A,2I7,4(1X,F15.6))') 'Y-coord ', iatom, lmpatom, atomcoord(2,iatom), AtomDispl(2,iaTom), rcoords(2,lmpatom)
-			  
+		lmpatom = lammps_cadd_gmap(iatom)
+		rcoords(1,lmpatom) = atomcoord(1,iatom) + atomdispl(1,iatom)
+		rcoords(2,lmpatom) = atomcoord(2,iatom) + atomdispl(2,iatom)  
 	    end if
     end do	
 
@@ -276,20 +209,6 @@ contains
        end do
     end do
     
-!     write(*,'(A,2I7, 4(1X,F15.6))') 'Scattering atoms', minlmpatom, maxlmpatom, min_coordx, min_coordy, max_coordx, max_coordy
-    
-!!$    print *, minval(rcoords(1,:)), maxval(rcoords(1,:)), minval(rcoords(2,:)), maxval(rcoords(2,:))
-!!$
-!!$    write(command_line, '(A23,2(1X,F15.8),A16)') 'change_box all x final ',  &
-!!$         minval(rcoords(1,:)),  maxval(rcoords(1,:)),  &
-!!$         ' remap units box'
-!!$    call lammps_command(lmp, command_line)
-!!$   
-!!$    write(command_line, '(A23,2(1X,F15.8),A16)') 'change_box all y final ',  &
-!!$         minval(rcoords(2,:)), maxval(rcoords(2,:)), &
-!!$         ' remap units box'
-!!$    call lammps_command(lmp, command_line)
-
     call lammps_scatter_atoms(lmp,'x', r)
 
     return
@@ -366,10 +285,7 @@ contains
           if (isRelaxed(iatom) /= -1) then
 
              lmpatom = lammps_cadd_map(iatom)
-			 
-             !print*,'lmpatom update_cadd', lmpatom
-             !if (lmpatom >= 1 .AND. lmpatom <= nsize) then
-             
+
              Atomforce(1:2,iatom) = lammps_force(1:2,lmpatom)
              
              Velocity(1:2,iatom) = lammps_velocity(1:2,lmpatom)
@@ -384,14 +300,6 @@ contains
 
              end if
 
-!!$             value exists accessible as such
-!!$             print*,'compute_lammps_avg_stress_xx of lmpatom 1', compute_lammps_avg_stress_xx(1)
-
-!             print*,'compute_lammps_stress of (1,lmpatom)', compute_lammps_stress(1, lmpatom)
-!             print*,'iAtom before crash: ', iAtom
-!             Virst(1,1,iAtom) = compute_lammps_stress(1, lmpatom)
-!             print*,'Virst of lmpatom', Virst(1,1,iAtom)
-
              do i = 1, 3
                 do j = 1, 3
                    if (i == j) then 
@@ -403,8 +311,6 @@ contains
              end do
 
              AveVirst(1,1,iAtom) = compute_lammps_avg_stress_xx(lmpatom)
-!!$             print*,'compute_lammps_avg_stress_xx of lmpatom', compute_lammps_avg_stress_xx(lmpatom)
-!!$             print*,'AveVirst of lmp atom', AveVirst(1,1,iAtom)
              AveVirst(2,2,iAtom) = compute_lammps_avg_stress_yy(lmpatom)
              AveVirst(3,3,iAtom) = compute_lammps_avg_stress_zz(lmpatom)
              AveVirst(1,2,iAtom) = compute_lammps_avg_stress_xy(lmpatom)
@@ -415,12 +321,8 @@ contains
              AveVirst(3,1,iAtom) = AveVirst(1,3,iAtom)
              AveVirst(3,2,iAtom) = AveVirst(2,3,iAtom)
 
-             !end if
           end if
        end if
     end do
-
-!!$    AveVirst(:,:,:) = Virst(:,:,:)
-
   end subroutine update_from_lammps
 end module mod_lammps
