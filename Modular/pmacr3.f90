@@ -78,8 +78,8 @@
 !
       ISRelaxed(1:NUM2dnode) = -1
       !
-!$OMP_PARALLEL      
-!$OMP_DO      
+!$OMP PARALLEL      
+!$OMP DO      
       DO i = 1 , NUM2dnode
          first = .TRUE.
          DO j = 1 , NUMel
@@ -107,15 +107,16 @@
                         EXIT
                      ELSE
                         ISRelaxed(i) = 2
-                        CYCLE
+                        EXIT
                      ENDIF
                   ENDIF
                ENDIF
             ENDDO
+            if (IsRelaxed(i) == 2) exit
          ENDDO
       ENDDO
 !$OMP END DO
-!$OMP_PARALLEL      
+!$OMP END PARALLEL      
       
       IF ( NUMnpp1>NUMnp ) ISRelaxed(NUMnpp1) = 1
  
