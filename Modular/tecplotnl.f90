@@ -134,7 +134,7 @@
          PRINT * , 'Total no. of dislocations = ' , NDIsl
 !        if (ndisl > 0 .or. nprint .eq. 0) then
 !         if (ndisl > 0) then
-!         CALL DUMPDISL_VTK(scale,logic,umag,B,NDF)
+         CALL DUMPDISL_VTK1(scale,logic,umag,B,NDF)
 !         else
 !           print *, 'no dislocations to print in output file'
 !        endif
