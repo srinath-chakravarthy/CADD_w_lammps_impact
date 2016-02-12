@@ -23,22 +23,12 @@
       integer :: logic
       character*80 :: filename
 
-!!$      filename = 'out/atom_temp_fem0.cfg'
-!!$      CALL IOFILE(filename,'formatted  ',logic,.FALSE.)
-!!$      CALL DUMP_ATOM(Atomcoord,Atomdispl,logic)
-!!$      CLOSE (logic)
-
       CALL CPU_TIME(CT2)
       IF ( Solvefem==.TRUE. ) THEN
 !!	   Solve FEM
          CALL VAFUNCMD(Id,Atomcoord,Ix,F,Avedispl,Atomforce,&
      &                 Systemenergy,Moveatoms,Movedisl,Fullfield,&
      &                 Straine0,Ifem,MOVed)
-!!$         filename = 'out/atom_temp_fem1.cfg'
-!!$         CALL IOFILE(filename,'formatted  ',logic,.FALSE.)
-!!$         CALL DUMP_ATOM(Atomcoord,Atomdispl,logic)
-!!$         CLOSE (logic)
-
          
 !!		Get Forces and displacements, specifically on PAD atoms
          DO iatom = 1 , NUMnp
@@ -55,11 +45,6 @@
 !                end if
             END IF              
          ENDDO
-
-!!$         filename = 'out/atom_temp_fem2.cfg'
-!!$         CALL IOFILE(filename,'formatted  ',logic,.FALSE.)
-!!$         CALL DUMP_ATOM(Atomcoord,Atomdispl,logic)
-!!$         CLOSE (logic)
 
          
          !!       Now set atom displacements
@@ -243,33 +228,6 @@
       READ (200,*) maxmdsteps
       CLOSE (200)
 
-
-
-
-
-!! Jun Song comments: output step, energy and temperature per steps
-!!(specified when writing to the file)
-      OPEN (5800,FILE='MDlog.CADD',STATUS='unknown')
-!! Jun Song comment: Initialization
-
-!	Write Data
-      WRITE (*,*) 'Base langevinCoeff: ' , langevincoeff
-      WRITE (*,*) 'LangevinCoeff scale ratio' , LVScaleratio
-!C--Jun Song: Care with Langevin Coefficient!!
-      WRITE (*,*) 'Langevin Coefficient' , langevincoeff*LVScaleratio
-      WRITE (6,99002) 'requiredTemp: ' , requiredtemp
-      WRITE (6,99002) 'timestep1: ' , TIMestep1
-      WRITE (6,99002) 'timestepH: ' , TIMestep1/INDextimeh
-      WRITE (6,99003) 'FEMStepMin: ' , femstepmin
-      WRITE (6,99003) 'Nsteps: ' , nsteps
-      WRITE (6,99002) 'atomic mass: ' , atommass
-      WRITE (6,99004) 'Thermostat: ' , thermostat%TYPE
-      WRITE (6,99004) 'Damping Mode: ' , thermostat%DAMPING_MODE
-      WRITE (*,*) '# T Rescale MD steps: ' , NUMmdrescale
-      WRITE (*,*) 'The windown for T rescale ' , TWIndow
-      WRITE (*,*) '**********For H atom only**********'
-      WRITE (*,*) 'H stablizer Steps' , NHRescale , 'for T>' , MAXhtemp
-      WRITE (*,*) 'Exclude H from Thermostat? ' , HNVeflag
 
       ! ---- Lammps is run for fem_call_back_steps for a total of total_lammps_steps
       ! ---- so that the main loop is only for lammps_loop
