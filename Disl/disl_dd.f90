@@ -151,9 +151,9 @@
 !!$      DOUBLE PRECISION , OPTIONAL :: S_dis
 !
 
-      PRINT * , 'Image Locations'
-      PRINT * , 'Subtract =' , R0(1:2)
-      PRINT * , 'Image = ' , Rd(1:2)
+!!$      PRINT * , 'Image Locations'
+!!$      PRINT * , 'Subtract =' , R0(1:2)
+!!$      PRINT * , 'Image = ' , Rd(1:2)
       if (store) call disl_accept(rd, burg, th_e, th_s)
 !!$      IF ( Store ) THEN
 !!$         IF ( nucl ) THEN

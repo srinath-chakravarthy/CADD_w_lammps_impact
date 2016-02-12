@@ -187,88 +187,26 @@ contains
     allocate(rcoords(3,natoms))
     rcoords = reshape(r,shape(rcoords))
 
-
-    !print*,'before type gather'
-
     ! --- collecting the types of each atom in lammps
     ! --- so we can ignore the indenter atoms
     !call lammps_gather_atoms(lmp,'type',1,types)
 
-   ! print*,'printing out types'
-
-    !do iatom = 1,natoms
-    !  print*,'atom ',iatom,' type ', types(iatom)
-    !  print*,'atom ',iatom,' xpos ', rcoords(1,iatom)
-    !enddo
-
     print*,'--------lammps_cadd_gmap--------'
     print*,'size lammps_cadd_gmap', size(lammps_cadd_gmap)
 
-    !do iatom = 1, numnp
-    !   print*,'lmp_atom', lammps_cadd_gmap(iatom)
-    !end do
-
-    print*,'--------lammps_cadd_map--------'
-    print*,'size lammps_cadd_map', size(lammps_cadd_map)
-    
-    !do iatom = 1, numnp
-    !   print*,'lmp_atom', lammps_cadd_map(iatom)
-    !end do
-
-    minlmpatom = 5000000
-    maxlmpatom = -5000000
-    
-    min_coordy = 5000000.0d0
-    min_coordx = 5000000.0d0
-    
-    max_coordy = -5000000.0d0
-    max_coordx = -5000000.0d0
-
     do iatom = 1, numnp
-		if (update_all) then
-			update_def = (isrelaxed(iAtom) /= 0) 
-	    else
-			update_def = (isrelaxed(iAtom) == -1)
-		end if
-	   
-!	    if (update_pad) then
-!			update_def = (isrelaxed(iAtom) == -1)
-!	    end if
-		
-	    if (update_def) then 
- 			   lmpatom = lammps_cadd_gmap(iatom)
-! 			   if (lmpatom > maxlmpatom) then 
-! 			    maxlmpatom = lmpatom
-! 			  end if
-! 			  if (lmpatom < minlmpatom) then 
-! 			    minlmpatom = lmpatom
-! 			  end if
-	
-!         print*,'lmpatom update_def', lmpatom
-         !if (lmpatom >= 1 .AND. lmpatom <= natoms) then
-			      rcoords(1,lmpatom) = atomcoord(1,iatom) + atomdispl(1,iatom)
-			      rcoords(2,lmpatom) = atomcoord(2,iatom) + atomdispl(2,iatom)
-         !end if
-! 			  if (rcoords(1,lmpatom) < min_coordx) then 
-! 			    min_coordx = rcoords(1,lmpatom)
-! 			  end if
-! 			  
-! 			  if (rcoords(2,lmpatom) < min_coordy) then 
-! 			    min_coordy = rcoords(2,lmpatom)
-! 			  end if
-! 
-! 			  if (rcoords(1,lmpatom) > max_coordx) then 
-! 			    max_coordx = rcoords(1,lmpatom)
-! 			  end if
-! 			  
-! 			  if (rcoords(2,lmpatom) > max_coordy) then 
-! 			    max_coordy = rcoords(2,lmpatom)
-! 			  end if
-! 			  write(*, '(A,2I7,4(1X,F15.6))') 'X-coord ', iatom, lmpatom, atomcoord(1,iatom), AtomDispl(1,iaTom), rcoords(1,lmpatom)
-! 			  write(*, '(A,2I7,4(1X,F15.6))') 'Y-coord ', iatom, lmpatom, atomcoord(2,iatom), AtomDispl(2,iaTom), rcoords(2,lmpatom)
-			  
-	    end if
-    end do	
+       if (update_all) then
+          update_def = (isrelaxed(iAtom) /= 0) 
+       else
+          update_def = (isrelaxed(iAtom) == -1)
+       end if
+
+       if (update_def) then 
+          lmpatom = lammps_cadd_gmap(iatom)
+          rcoords(1,lmpatom) = atomcoord(1,iatom) + atomdispl(1,iatom)
+          rcoords(2,lmpatom) = atomcoord(2,iatom) + atomdispl(2,iatom)
+       end if
+    end do
 
     do iatom = 1, natoms
        do j = 1,3
@@ -276,20 +214,6 @@ contains
        end do
     end do
     
-!     write(*,'(A,2I7, 4(1X,F15.6))') 'Scattering atoms', minlmpatom, maxlmpatom, min_coordx, min_coordy, max_coordx, max_coordy
-    
-!!$    print *, minval(rcoords(1,:)), maxval(rcoords(1,:)), minval(rcoords(2,:)), maxval(rcoords(2,:))
-!!$
-!!$    write(command_line, '(A23,2(1X,F15.8),A16)') 'change_box all x final ',  &
-!!$         minval(rcoords(1,:)),  maxval(rcoords(1,:)),  &
-!!$         ' remap units box'
-!!$    call lammps_command(lmp, command_line)
-!!$   
-!!$    write(command_line, '(A23,2(1X,F15.8),A16)') 'change_box all y final ',  &
-!!$         minval(rcoords(2,:)), maxval(rcoords(2,:)), &
-!!$         ' remap units box'
-!!$    call lammps_command(lmp, command_line)
-
     call lammps_scatter_atoms(lmp,'x', r)
 
     return

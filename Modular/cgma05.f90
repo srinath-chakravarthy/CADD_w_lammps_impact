@@ -40,13 +40,9 @@
  
       edd = 0
       CALL INITIALISEENERGY(.TRUE.,.TRUE.,Id,Dr,F)
-      !      print *, 'Ifem in VafuncMD is', iFem
-      write(*, '(A,3I7)')'IX before fem_movepad ==============================', ix(1,1), ix(2,1), ix(3,1)
       CALL FEM_MOVE_PAD(X,B,Ix,F,TIMe,Z_Length,Id,ISRelaxed,edd,Dr,&
      &                  Fullfield,Movedisl,Straine0,NUMel,AVEvirst,&
      &                  SYStemp,Ifem,MOVed)
-      write(*, '(A,3I7)')'IX before fem_movepad ==============================', ix(1,1), ix(2,1), ix(3,1)
-
       !
 !     initialize
 !

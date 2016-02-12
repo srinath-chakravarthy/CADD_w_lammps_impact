@@ -675,9 +675,7 @@
 !
                CALL CHECKBURGERS(EPSloc(1:3,1:3,i),POSsible(1:NBUrger,i)&
      &                           ,IBUrg(i),X,B,Ix,IMAp(i),ENOrm)
-               WRITE (*,*) 'slip found in element' , IMAp(i) , &
-     &                     ABS(Ix(Nen1,IMAp(i))) , ELIdb(i) , NDBpoly , &
-     &                     ' :'
+               WRITE (*,'(A,4I7,A)') 'slip found in element' , IMAp(i) ,  ABS(Ix(Nen1,IMAp(i))) , ELIdb(i) , NDBpoly , ' :'
 !$$$               write(*,*) x(1:2,ix(1,imap(i))),b(1:3,ix(1,imap(i)))
 !$$$               write(*,*) x(1:2,ix(2,imap(i))),b(1:3,ix(2,imap(i)))
 !$$$               write(*,*) x(1:2,ix(3,imap(i))),b(1:3,ix(3,imap(i)))
@@ -685,8 +683,7 @@
 !$$$               write(*,*) 'strain matrix:'
 !$$$               write(*,'(3e15.6)') (epsloc(j,1:3,i),j=1,3)
 !$$$               write(*,*)
-               WRITE (*,*) 'burgers vector:' , IBUrg(i) , &
-     &                     BURg(1:3,IBUrg(i))
+               WRITE (*,'(A,I5,3F16.6)') 'burgers vector:' , IBUrg(i) , BURg(1:3,IBUrg(i))
  
 !
 !     process the dislocation:  determine its location, the direction of
@@ -761,12 +758,12 @@
 !
                      call FindImageLocation(xi,ifactor,x0,bvec(1:3),ix,x,nxdm,numnp,numel,nen1)
                      theta_e = itheta*PI
-                     WRITE (*,*) 'dislocation at ' , x0
-                     WRITE (*,*) 'passed to ' , xd
-                     WRITE (*,*) 'Image Location' , xi
-                     WRITE (*,*) 'with b=' , bvec(1:3)
-                     WRITE (*,*) 'and theta_e=' , theta_e
-                     WRITE (*,*) 'and theta_s=' , theta_s
+                     WRITE (*,'(A,3F15.6)') 'dislocation at ' , x0
+                     WRITE (*,'(A,3F15.6)') 'passed to ' , xd
+                     WRITE (*,'(A,3F15.6)') 'Image Location' , xi
+                     WRITE (*,'(A,3F15.6)') 'with b=' , bvec(1:3)
+                     WRITE (*,'(A,F15.6)') 'and theta_e=' , theta_e
+                     WRITE (*,'(A,F15.6)') 'and theta_s=' , theta_s
  
                      CALL DISL_PASS(x0,xd,bvec(1:3),theta_e,theta_s,X,B,Isrelaxed,Numnp,.TRUE.,.TRUE.)
                      itheta=mod(itheta+1,2)
@@ -1508,12 +1505,12 @@
             ENDDO
             IF ( found ) THEN
                ip(2) = ifound
-	       print *, 'vertex ', ip(1), ip(2), next
+!!$	       print *, 'vertex ', ip(1), ip(2), next
                DO iel = 1 , Numel
                   DO j = 1 , 3
                      jp1 = MOD(j,3) + 1
                      IF ( Ix(j,iel)==ip(2) .AND. Ix(jp1,iel)==ip(1) )  THEN
-			print *, 'Detection band element = ', iel, -j, next
+!!$			print *, 'Detection band element = ', iel, -j, next
                         Ix(Nen1,iel) = -j
 !     Qu modified detection band ring starts
                         iring = iring + 1

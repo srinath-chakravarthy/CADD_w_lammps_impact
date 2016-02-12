@@ -408,12 +408,12 @@
          inode = ELIst(1,i)
          ELIst(2,i) = ELIst(1,i+1)
          aangle = -DATAN2(X(2,inode),X(1,inode))
-         WRITE (*,'(A7,3I7,1X,3E15.7)') 'Elist ' , i , ELIst(1,i) , &
-     &                                  ELIst(2,i) , X(1,inode) , &
-     &                                  X(2,inode) , aangle
+!!$         WRITE (*,'(A7,3I7,1X,3E15.7)') 'Elist ' , i , ELIst(1,i) , &
+!!$     &                                  ELIst(2,i) , X(1,inode) , &
+!!$     &                                  X(2,inode) , aangle
       ENDDO
       ELIst(2,NCE) = ELIst(1,1)
-      PRINT * , 'Elist ' , NCE , ELIst(1,NCE) , ELIst(2,NCE)
+!!$      PRINT * , 'Elist ' , NCE , ELIst(1,NCE) , ELIst(2,NCE)
 
       PRINT * , 'No. of outer boundary edges = ' , NCE
 
