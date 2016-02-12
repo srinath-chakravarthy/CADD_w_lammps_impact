@@ -117,7 +117,7 @@ contains
     cadd_lammps_gmap = -HUGE(kind4int)
     lammps_cadd_gmap = -HUGE(kind4int)
 
-    print *, nsize, n_lammps_atoms
+!!$    print *, nsize, n_lammps_atoms
     
     do iAtom = 1, numnp
        if (isRelaxed(iAtom) /= 0) then
@@ -179,7 +179,7 @@ contains
     call lammps_extract_global(ylo, lmp, 'boxylo')
     call lammps_extract_global(yhi, lmp, 'boxyhi')
 
-    print *, 'Lammps box size = ', xlo, xhi, ylo, yhi
+!!$    print *, 'Lammps box size = ', xlo, xhi, ylo, yhi
 
     
     call lammps_gather_atoms(lmp,'x',3, r)
@@ -191,8 +191,8 @@ contains
     ! --- so we can ignore the indenter atoms
     !call lammps_gather_atoms(lmp,'type',1,types)
 
-    print*,'--------lammps_cadd_gmap--------'
-    print*,'size lammps_cadd_gmap', size(lammps_cadd_gmap)
+!!$    print*,'--------lammps_cadd_gmap--------'
+!!$    print*,'size lammps_cadd_gmap', size(lammps_cadd_gmap)
 
     do iatom = 1, numnp
        if (update_all) then
@@ -291,9 +291,6 @@ contains
 
              lmpatom = lammps_cadd_map(iatom)
 			 
-             !print*,'lmpatom update_cadd', lmpatom
-             !if (lmpatom >= 1 .AND. lmpatom <= nsize) then
-             
              Atomforce(1:2,iatom) = lammps_force(1:2,lmpatom)
              
              Velocity(1:2,iatom) = lammps_velocity(1:2,lmpatom)
@@ -308,14 +305,6 @@ contains
 
              end if
 
-!!$             value exists accessible as such
-!!$             print*,'compute_lammps_avg_stress_xx of lmpatom 1', compute_lammps_avg_stress_xx(1)
-
-!             print*,'compute_lammps_stress of (1,lmpatom)', compute_lammps_stress(1, lmpatom)
-!             print*,'iAtom before crash: ', iAtom
-!             Virst(1,1,iAtom) = compute_lammps_stress(1, lmpatom)
-!             print*,'Virst of lmpatom', Virst(1,1,iAtom)
-
              do i = 1, 3
                 do j = 1, 3
                    if (i == j) then 
@@ -327,8 +316,6 @@ contains
              end do
 
              AveVirst(1,1,iAtom) = compute_lammps_avg_stress_xx(lmpatom)
-!!$             print*,'compute_lammps_avg_stress_xx of lmpatom', compute_lammps_avg_stress_xx(lmpatom)
-!!$             print*,'AveVirst of lmp atom', AveVirst(1,1,iAtom)
              AveVirst(2,2,iAtom) = compute_lammps_avg_stress_yy(lmpatom)
              AveVirst(3,3,iAtom) = compute_lammps_avg_stress_zz(lmpatom)
              AveVirst(1,2,iAtom) = compute_lammps_avg_stress_xy(lmpatom)
