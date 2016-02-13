@@ -11,7 +11,7 @@
       PARAMETER (PEIERLS=0.0D0)
  
       INTEGER MAX_DISL
-      PARAMETER (MAX_DISL=2000)
+      PARAMETER (MAX_DISL=5000)
 !
 !>ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !>
