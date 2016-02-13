@@ -4,6 +4,15 @@ project(CADD)
 enable_language(Fortran)
 enable_language(CXX OPTIONAL)
 
+# Default is debug build
+if (NOT CMAKE_BUILD_TYPE)
+  set (CMAKE_BUILD_TYPE Debug)
+  set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -O1")
+endif ()
+
+option (USE_OPENMP "Compile with OpenMP support (for Lammps)" OFF)
+
+
 # list of source files
 INCLUDE_DIRECTORIES(  lammps
   ${CMAKE_BINARY_DIR}/lammps
@@ -92,26 +101,34 @@ add_ff_flags(-shared-intel)
 add_ff_flags(-fpp)
 add_ff_flags(-fPIC)
 add_ff_flags(-cxxlib)
-#add_ff_flags(-lm)
 add_sh_flags(-lz)
-#add_sh_flags(-lstdc++)
-#add_sh_flags(-lm)
-
-#add_exe_flags(-lstdc++)
-#add_exe_flags(-lm)
 add_exe_flags(-lz)
 
 set(lammpsf90 ${CMAKE_SOURCE_DIR}/lammps/LAMMPS.o)
 set(lammpscpp ${CMAKE_SOURCE_DIR}/lammps/LAMMPS-wrapper.o)
-set(lammps /home/srinath/lammps.git/src/liblammps_intel.so)
 set(stubs /home/srinath/lammps.git/src/STUBS/libmpi_stubs.a)
+
+
+if (USE_OPENMP)
+    include (FindOpenMP)
+    if (OPENMP_FOUND)
+        set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+	set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${OpenMP_Fortran_FLAGS}")
+        list (APPEND MODULE_LIST "openmp")
+	set(lammps /home/srinath/lammps.git/src/liblammps_intel_openmp.so)
+      endif ()
+    else()
+      set(lammps /home/srinath/lammps.git/src/liblammps_intel.so)
+endif ()
+
 
 
 # Add executable 
 add_executable(CADD ${SRC_FILES} ${INC_FILES})
 target_link_libraries(CADD dislo mdlro lammpsf90 lammpscpp ${lammps} ${stubs})
-#add_dependencies(CADD dislo lammpsf90 lammpscpp ${lammps} ${stubs} mdlro)
 
-#if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
-#  message(FATAL_ERROR "Sorry CADD does not compile with gfortran. Please choose an other compiler by s#etting the variable CMAKE_Fortran_COMPILER")
-#endif()
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+  message(FATAL_ERROR "Sorry CADD does not compile with gfortran. Please choose an other compiler by s#etting the variable CMAKE_Fortran_COMPILER")
+endif()
