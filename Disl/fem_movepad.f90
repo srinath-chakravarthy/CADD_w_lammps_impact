@@ -107,7 +107,7 @@
       E_out = e0*Cz
 !
 !       move dislocations based on P.-K. force
-!        if(MoveDisl) call move_dis(10.0,MDTemp)
+        if(MoveDisl) call move_dis(10.0,MDTemp)
 !
 !       move pad atoms according to tilda and hat fields
       CALL FD_MOVEPAD(X,rhs,B)
