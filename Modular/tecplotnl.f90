@@ -1089,23 +1089,23 @@
          IF ( Key=='viri' ) WRITE (Logic,FMT='(A)') 'Virial Stresses from CADD'
          WRITE (Logic,FMT='(A)') 'ASCII'
          WRITE (Logic,FMT='(A)') 'DATASET UNSTRUCTURED_GRID'
-         WRITE (Logic,FMT='(A6,1x,I7,1x,A5)') 'POINTS' , numpnts ,'float'
+         WRITE (Logic,FMT='(A6,1x,I11,1x,A5)') 'POINTS' , numpnts ,'float'
          DO i = 1 , numpnts
  
             xdef = X(1,i) + Umag*B(1,i)
             ydef = X(2,i) + Umag*B(2,i)
             zdef = X(3,i) + Umag*B(3,i)
-            WRITE (Logic,'(3(1x,e14.6))') xdef , ydef , zdef
+            WRITE (Logic,'(3(1x,e15.6))') xdef , ydef , zdef
          ENDDO
          WRITE (Logic,*)
-         WRITE (Logic,'(A5,1X,I7,1X,I7)') 'CELLS' , NUMel , 4*numtri
+         WRITE (Logic,'(A5,1X,I11,1X,I11)') 'CELLS' , NUMel , 4*numtri
  
          DO n = 1 , NUMel
-            WRITE (Logic,'(4i6)') 3 , Ix(1,n) - 1 , Ix(2,n) - 1 , Ix(3,n) - 1
+            WRITE (Logic,'(4i10)') 3 , Ix(1,n) - 1 , Ix(2,n) - 1 , Ix(3,n) - 1
          ENDDO
          WRITE (Logic,*)
  
-         WRITE (Logic,'(A10,1X,I7)') 'CELL_TYPES' , NUMel
+         WRITE (Logic,'(A10,1X,I11)') 'CELL_TYPES' , NUMel
  
          DO n = 1 , NUMel
             WRITE (Logic,FMT='(5(1x,I7))') 5
@@ -1124,7 +1124,7 @@
          DO i = 1 , numpnts
 !$$$               , nstrain(2,3,i), nstrain(1
 !$$$     $              ,3,i), nstrain(1,2,i)
-            IF ( Key=='stra' ) WRITE (Logic,'(6(1x,e14.6))')&
+            IF ( Key=='stra' ) WRITE (Logic,'(6(1x,e15.6))')&
      &                                nstrain(1,1,i) , nstrain(2,2,i) , &
      &                                nstrain(1,2,i)
             virist(:,:) = AVEvirst(:,:,i)*fact
@@ -1151,7 +1151,7 @@
          ENDDO
          WRITE (Logic,*) 'VECTORS F float'
          DO i = 1 , numpnts
-            WRITE (Logic,'(3e14.6)') DBLE(Id(1,i)) , DBLE(Id(2,i)) , 0.0
+            WRITE (Logic,'(3e15.6)') DBLE(Id(1,i)) , DBLE(Id(2,i)) , 0.0
          ENDDO
          WRITE (Logic,*) 'CELL_DATA' , NUMel
          WRITE (Logic,*) 'SCALARS DB integer'

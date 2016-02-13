@@ -201,6 +201,7 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
       DOUBLE PRECISION ddis
       double precision :: ev_convert1
       CHARACTER*80 error_message
+      double precision :: dist2
                                 !
 !!$!!!!    hacked parameters
       min_pos = -10.0
