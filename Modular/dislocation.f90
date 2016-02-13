@@ -768,7 +768,7 @@
                      CALL DISL_PASS(x0,xd,bvec(1:3),theta_e,theta_s,X,B,Isrelaxed,Numnp,.TRUE.,.TRUE.)
                      itheta=mod(itheta+1,2)
                      theta_e=itheta*PI
-                     call disl_pass(xi,xi,-bvec(1:3),theta_e,theta_s ,b,IsRelaxed,numnp,.true.,.true.)
+                     call disl_pass(xi,xi,-bvec(1:3),theta_e,theta_s,X,B,IsRelaxed,numnp,.true.,.true.)
                      CALL DISL_PRINT(0)
 99001                FORMAT (5E15.6)
                      Dislpass = .TRUE.
