@@ -190,57 +190,67 @@
  
 !!!!!!!!dw added subroutine!!!!!!!!!!!!!!!!!!
       SUBROUTINE MOVE_DIS(Alpha,Temperature)
-      USE MOD_DISL_PARAMETERS
+            USE MOD_DISL_PARAMETERS
+            USE MOD_GLOBAL
       IMPLICIT NONE
 !*--MOVE_DIS197
-      DOUBLE PRECISION Alpha , mobility , max_vel
-      DOUBLE PRECISION sf_f , aa , bb
+      DOUBLE PRECISION Alpha , mobility , max_vel, max_ds
+      DOUBLE PRECISION sf_f , aa , bb, deltas
       DOUBLE PRECISION min_pos , Temperature , time_step_con
 !
       INTEGER FE_LOCATE , i , elem_old
       DOUBLE PRECISION b
       DOUBLE PRECISION ddis
+      double precision :: ev_convert1
       CHARACTER*80 error_message
 !
 !!!!    hacked parameters
       min_pos = -10.0
-      time_step_con = 5.0E-4
-!C--Jun Song: make sure temperature>0.0
+      time_step_con = 1000.0d0 * lammps_timestep
+
+      !!--Jun Song: make sure temperature>0.0
       IF ( Temperature<0.0D0 ) THEN
          WRITE (*,*) "Temperature less than Zero!!!"
          STOP
       ENDIF
- 
-!C--JS: 6.242e-2 is unit conversion constant. Do not change
-!C--Change the stacking fault E for different materials
-      mobility = time_step_con/(6.242E-2*5.0E-8*Temperature)
-        ! 3rd parameter (5.0e-8) is damp coef from Olmstead paper
-        ! "Atomistic simulations of dislocation mobility.."
-      max_vel = time_step_con*2000.0
-      sf_f = .089*6.242E-2 ! sf energy in J/m2,i.e., 0.089
+      ev_convert1 = 0.62415096471d-11 !> Convert from Pa to ev/A^3
+      mobility = 5.0d-8 !> Actual value is Pa s
+      mobility = mobility * 1.0d-15 * ev_convert1 !> Converted value is ev/A^3 fs
+      max_vel = 2.0d3 !> Actual value in m/s
+      max_vel = max_vel * 1.0d10/1.0d15 !> Converted to A/fs
+      max_ds = max_vel * time_step_con
+      sf_f = 0.0 ! zero stacking fault energy for hex al
+      
+      !!--JS: 6.242e-2 is unit conversion constant. Do not change
+      !!--Change the stacking fault E for different materials
+      !!mobility = time_step_con/(6.242E-2*5.0E-8*Temperature)
+      !! 3rd parameter (5.0e-8) is damp coef from Olmstead paper
+      !! "Atomistic simulations of dislocation mobility.."
+!!$      max_vel = time_step_con*2000.0
+!!$      sf_f = .089*6.242E-2 ! sf energy in J/m2,i.e., 0.089
 !!!!    end of hacked parameters
  
       DO i = 1 , NDIsl
-         IF ( ELEm_disl(i)/=0 ) THEN
-            PK_f(i) = (PK_force(1,i)*BURgers(1,i)+PK_force(2,i)&
-     &                *BURgers(2,i))/BURg_length(i)
-!            write(*,*) i,' non sf disl force = ',pk_f(i)
+         IF ( ELEm_disl(i)>0 ) THEN
+            PK_f(i) = (PK_force(1,i)*BURgers(1,i)+PK_force(2,i) *BURgers(2,i))/BURg_length(i)
             ddis = SQRT(R_Disl(1,i)**2+R_Disl(2,i)**2)
             PK_f(i) = PK_f(i) + sf_f
-!!!!        upper limit on velocities
-            IF ( ABS(PK_f(i)*mobility)>max_vel ) PK_f(i)&
-     &           = max_vel/mobility*PK_f(i)/ABS(PK_f(i))
-!            write(*,*) 'old disl pos = ',r_disl(1, i), r_disl(2, i),ddi
-!            write(*,*) i,' total disl force = ',pk_f(i)
-!            if(r_disl(2,i).gt.-100.0.or.pk_f(i).gt.0.0) then
-            IF ( R_Disl(2,i)<=min_pos .OR. PK_f(i)<0.0 ) THEN
-               R_Disl(1,i) = R_Disl(1,i) + mobility*PK_f(i)*BURgers(1,i)&
-     &                       /BURg_length(i)
-               R_Disl(2,i) = R_Disl(2,i) + mobility*PK_f(i)*BURgers(2,i)&
-     &                       /BURg_length(i)
-            ENDIF
-!            endif
-            WRITE (*,*) 'new disl pos = ' , R_Disl(1,i) , R_Disl(2,i)
+!!$        upper limit on velocities
+            deltas = PK_f(i) * time_step_con/mobility
+            if (deltas > max_ds) then
+               deltas = max_ds
+            end if
+       
+!!$            IF ( ABS(PK_f(i)*mobility)>max_vel ) then
+!!$               PK_f(i) = max_vel/mobility*PK_f(i)/ABS(PK_f(i))
+!!$            END IF
+            WRITE (*,'(A,I7,2(1X,F15.6))') 'old disl pos = ' , i, R_Disl(1,i) , R_Disl(2,i)
+          
+!!$            IF ( R_Disl(2,i)<=min_pos .OR. PK_f(i)<0.0 ) THEN
+               R_Disl(1,i) = R_Disl(1,i) + deltas*BURgers(1,i)/BURg_length(i)
+               R_Disl(2,i) = R_Disl(2,i) + deltas*BURgers(2,i)/BURg_length(i)
+!!$            ENDIF
+            WRITE (*,'(A,I7,2(1X,F15.6))') 'new disl pos = ' , i, R_Disl(1,i) , R_Disl(2,i)
             WRITE (*,*) ' '
             elem_old = ELEm_disl(i)
             ELEm_disl(i) = FE_LOCATE(R_Disl(1,i),ELEm_disl(i))
