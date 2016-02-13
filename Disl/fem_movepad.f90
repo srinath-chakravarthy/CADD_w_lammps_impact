@@ -196,7 +196,7 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
       DOUBLE PRECISION sf_f , aa , bb, deltas
       DOUBLE PRECISION min_pos , Temperature , time_step_con
 
-      INTEGER FE_LOCATE , i , elem_old
+      INTEGER FE_LOCATE , i , elem_old, idisl, jdisl, j
       DOUBLE PRECISION b
       DOUBLE PRECISION ddis
       double precision :: ev_convert1
@@ -261,4 +261,21 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
             ENDIF
          ENDIF
       ENDDO
+      !! ---- Check for collisions with existing dislocations
+      !! --- This is the simplest possible algorithm... needs to be modified if full DD exisits
+      do i = 1, ndisl
+         if (elem_disl(i) > 0) then
+            do j = 1, ndisl
+               if (elem_disl(j) > 0) then
+                  !! Calculate distance between 2 dislocations
+                  if (dist2(R_disl(1:2,i), R_disl(1:2,j)) > burg_length(j)) then
+                     deltas = 2.d0*burg_length(j)
+                     !! Move the jth dislocation in the direction of the burgers vector
+                     R_disl(1,j) = R_disl(1,j) + deltas*BURgers(1,j)/BURg_length(j)
+                     R_disl(2,j) = R_disl(2,j) + deltas*BURgers(2,j)/BURg_length(j)
+                  end if
+               end if
+            end do
+         end if
+      end do
 END SUBROUTINE MOVE_DIS
