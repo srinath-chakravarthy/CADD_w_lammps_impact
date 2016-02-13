@@ -223,7 +223,20 @@
       !! Currently using old variables for compatibilty
       ! ---- Lammps is run for fem_call_back_steps for a total of total_lammps_steps
                                 ! ---- so that the main loop is only for lammps_loop
-      nsteps = num_md_steps
+                                
+                                
+!       write(*,'(A)') 'Lammps md paramters'
+!       write(*,'(A, F15.6, 4(1X,I1))') 'Stadium parameter = ', stadium_width, exclude_top, exclude_bot, exclude_left, exclude_right
+!       write(*,'(A, 2E15.6)') 'Damping Coefficeitn =', damp_coeff, damp_ratio
+!       write(*,'(A, F15.3)') 'Temperature = ', lammps_temperature
+!       write(*,'(A, F15.3)') 'Time Step = ', lammps_timestep/1.e-12
+!       write(*,'(A, 5I7)') 'Steps (Update, mdsteps, output, restart, initial) = ', fem_update_steps,  & 
+! 		num_md_steps, lammps_output_steps, num_restart_steps, num_initial_equil
+!       write(*, '(A, 3F15.3)') 'Particle paramters (velocity, radius, height) = ', &
+! 		particle_velocity, particle_radius, particle_height                                
+       nsteps = num_md_steps
+
+      
       fem_call_back_steps = fem_update_steps
       total_lammps_steps = nsteps
       lammps_loop = total_lammps_steps/fem_call_back_steps
