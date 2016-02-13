@@ -44,6 +44,18 @@ subroutine write_lammps_data(Id, X, Ix, F, B, Itx, xmin, xmax, ymin, ymax)
       READ (200,*) particle_radius
       READ (200,*) particle_height
 
+!       write(*,'(A)') 'Lammps md paramters'
+!       write(*,'(A, F15.6, 4(1X,I1))') 'Stadium parameter = ', stadium_width, exclude_top, exclude_bot, exclude_left, exclude_right
+!       write(*,'(A, 2E15.6)') 'Damping Coefficeitn =', damp_coeff, damp_ratio
+!       write(*,'(A, F15.3)') 'Temperature = ', lammps_temperature
+!       write(*,'(A, F15.3)') 'Time Step = ', lammps_timestep/1.e-12
+!       write(*,'(A, 5I7)') 'Steps (Update, mdsteps, output, restart, initial) = ', fem_update_steps,  & 
+! 		num_md_steps, lammps_output_steps, num_restart_steps, num_initial_equil
+!       write(*, '(A, 3F15.3)') 'Particle paramters (velocity, radius, height) = ', &
+! 		particle_velocity, particle_radius, particle_height
+      
+      
+      
       CLOSE (200)
       top = .true.
       bot = .true.
@@ -77,11 +89,10 @@ subroutine write_lammps_data(Id, X, Ix, F, B, Itx, xmin, xmax, ymin, ymax)
 
       if (damp_coeff > 0.0) then 
          damp_coeff = 1.0/(damp_coeff)
-                                ! TODO error handler 
+      ! TODO error handler 
       end if
       !! Once again assuming metal units in lammps
       damp_coeff = damp_coeff / 1.0d-12
-      lammps_output_steps = nsteps
 
       !!> TODO get zmin and zmax from mat file automatically
       zmin = 0.0d0
@@ -219,7 +230,15 @@ subroutine initialize_lammps(Id,X,Ix,F,B,Itx,lmp)
       !!JM: Changed z-bounds from before
       zmin = 0.0d0
       zmax = 2.9573845299d0
-
+      write(*,'(A)') 'Lammps md paramters'
+      write(*,'(A, F15.6, 4(1X,I1))') 'Stadium parameter = ', stadium_width, exclude_top, exclude_bot, exclude_left, exclude_right
+      write(*,'(A, 2E15.6)') 'Damping Coefficeitn =', damp_coeff, damp_ratio
+      write(*,'(A, F15.3)') 'Temperature = ', lammps_temperature
+      write(*,'(A, F15.3)') 'Time Step = ', lammps_timestep/1.e-12
+      write(*,'(A, 5I7)') 'Steps (Update, mdsteps, output, restart, initial) = ', fem_update_steps,  & 
+		num_md_steps, lammps_output_steps, num_restart_steps, num_initial_equil
+      write(*, '(A, 3F15.3)') 'Particle paramters (velocity, radius, height) = ', &
+		particle_velocity, particle_radius, particle_height
 
 !!$        call lammps_open_no_mpi('lmg -log log.CADD', lmp)
 !!$     If replacing this entire subroutine by reading input file
@@ -255,8 +274,9 @@ subroutine initialize_lammps(Id,X,Ix,F,B,Itx,lmp)
       !!JM *** in write_lammps_data subroutine above ***
       write(command_line,'(A,2F15.3,A)') 'region 1 cylinder z 0.0 ', &
            particle_height + particle_radius, particle_radius, ' 0.0 0.1 units box'
+      call lammps_command(lmp, command_line)
       
-      call lammps_command(lmp, 'region 1 cylinder z 0.0 120.0 100.0 0.0 0.1 units box')
+!!$      call lammps_command(lmp, 'region 1 cylinder z 0.0 120.0 100.0 0.0 0.1 units box')
 
       !! --- creating particle atoms, type 5---
       call lammps_command(lmp, 'create_atoms 5 region 1')   
