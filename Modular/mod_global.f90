@@ -181,15 +181,30 @@
 !     atoms going either way Atom-> continuum or Continuum-> atom.
  
 !     Template method not used here .... need implementation
- 
+! ******************************************************************************************
+!      MD Parameters
+      ! ******************************************************************************************
+      integer :: exclude_top, exclude_bot, exclude_right, exclude_left !> @var parameters to control particle identification
+
 !     Stadium Langevin parameters
       double precision :: stadium_xmin, stadium_xmax, stadium_ymin, stadium_ymax, stadium_width
 !     Other MD parameters, currently local to md.f90 
-      double precision :: damp_coeff, lammps_temperature, nh_dampcoeff, damp_ratio, lammps_timestep
-      integer :: fem_update_steps, lammps_output_steps, num_md_steps
-      double precision :: tstart, tstop
-      integer :: exclude_top, exclude_bot, exclude_right, exclude_left
- 
+      double precision :: damp_coeff           !> @var Langevin damping coeff inverse time units --> gets converted to time internally
+      double precision :: lammps_temperature   !> @var Desired temperature 
+      double precision :: damp_ratio           !> @var Damping ratio ---> legacy parameter in case we need to scale ratio
+      double precision :: lammps_timestep      !> @var lammps_timestep --> if not set = 1.e-3 (metal units in lammps)
+      integer :: fem_update_steps              !> @var number of md steps before fem update  (10 - 50) typically
+      integer :: lammps_output_steps           !> @var number of md steps to output dump files (1 or fem_update_steps or num_md_steps)
+      integer :: num_md_steps                  !> @var number of md steps to perform before increasing fem load
+      integer :: num_restart_steps             !> @var number of md steps before writing restart files
+      integer :: num_initial_equil             !> @var number of initial steps for temperature equilibriation
+      double precision :: tstart, tstop        !> @var start and stop of temperature for thermostat (currently equal)
+      
+      !     Particle Parameters
+      double precision :: particle_velocity !> @var particle impact velocity (Angstrom/picosecond)
+      double precision :: particle_radius   !> @var particle radius (Angstrom), <= (xmax - xmin)/2.0 and (ymax-ymin)/2.0
+      double precision :: particle_height   !> @var particle initial height above top surface (Angstrom)
+
  
       CONTAINS
  

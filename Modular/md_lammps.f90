@@ -35,14 +35,6 @@
             Atomforce(1:NDF,iatom) = -Atomforce(1:NDF,iatom)
             IF ( ISRelaxed(iatom)==INDexcontinuum .OR. ISRelaxed(iatom) ==INDexpad ) THEN
                Atomdispl(1:NDF,iatom) = Avedispl(1:NDF,iatom)
-!                if (isrelaxed(iatom) == INDexpad) then
-!                   if (abs(atomcoord(2,iatom)) < 5.0) then
-!                      if (atomcoord(1,iatom) < 0) then
-!                         write(*, '(A25, I7, 4(1X,E15.8))'),'Pad atom displacement = ', iAtom, &
-!                              atomcoord(1:2,iatom), atomdispl(1:2, iatom)
-!                      end if
-!                   end if
-!                end if
             END IF              
          ENDDO
 
@@ -207,31 +199,32 @@
 
       PRINT * , 'Entering dosteps'
 !
-!	Read Data
-!C--Jun Song NumMDRescale is # of MD steps
-!C--doing temperature rescaling
-!C--Reading neighborlist update parameter
-      OPEN (UNIT=200,FILE='md.inp',STATUS='old')
-      READ (200,*) damped_width, exclude_top, exclude_bot, exclude_left, exclude_right
-      READ (200,*) langevincoeff , LVScaleratio
-      READ (200,*) lcnhdampcoeff
-      READ (200,*) requiredtemp
-      READ (200,*) TIMestep1
-      READ (200,*) INDextimeh
-      READ (200,*) femstepmin
-      READ (200,*) nsteps
-      READ (200,*) thermostat%TYPE
-      READ (200,*) thermostat%DAMPING_MODE
-      READ (200,*) NUMmdrescale
-      READ (200,*) TWIndow
-      READ (200,*) NHRescale , MAXhtemp , HNVeflag
-      READ (200,*) maxmdsteps
-      CLOSE (200)
+!!$!	Read Data
+!!$!C--Jun Song NumMDRescale is # of MD steps
+!!$!C--doing temperature rescaling
+!!$!C--Reading neighborlist update parameter
+!!$      OPEN (UNIT=200,FILE='md.inp',STATUS='old')
+!!$      READ (200,*) damped_width, exclude_top, exclude_bot, exclude_left, exclude_right
+!!$      READ (200,*) langevincoeff , LVScaleratio
+!!$      READ (200,*) lcnhdampcoeff
+!!$      READ (200,*) requiredtemp
+!!$      READ (200,*) TIMestep1
+!!$      READ (200,*) INDextimeh
+!!$      READ (200,*) femstepmin
+!!$      READ (200,*) nsteps
+!!$      READ (200,*) thermostat%TYPE
+!!$      READ (200,*) thermostat%DAMPING_MODE
+!!$      READ (200,*) NUMmdrescale
+!!$      READ (200,*) TWIndow
+!!$      READ (200,*) NHRescale , MAXhtemp , HNVeflag
+!!$      READ (200,*) maxmdsteps
+!!$      CLOSE (200)
 
-
+      !! Currently using old variables for compatibilty
       ! ---- Lammps is run for fem_call_back_steps for a total of total_lammps_steps
-      ! ---- so that the main loop is only for lammps_loop
-      fem_call_back_steps = femstepmin
+                                ! ---- so that the main loop is only for lammps_loop
+      nsteps = num_md_steps
+      fem_call_back_steps = fem_update_steps
       total_lammps_steps = nsteps
       lammps_loop = total_lammps_steps/fem_call_back_steps
       if (lammps_loop < 1) then
@@ -242,9 +235,9 @@
 
       finishmd = .FALSE.
       newmd = .FALSE.
-      timestep = TIMestep1
+      timestep = lammps_timestep
 
-      SYStemp = requiredtemp
+      SYStemp = lammps_temperature
       PRINT * , 'MDSteps: ' , mdsteps
       IF ( mdsteps==0 ) newmd = .TRUE.
 !c	if (MDSteps .eq. MAXMDSteps) finishMD = .true.
@@ -258,11 +251,11 @@
 !        Equilibrate initialized temperatures...
 !        Needed separately since otherwise the mapping
 !        gets mess up
-         call equilibrate_lammps(lmp)
+         call equilibrate_lammps(lmp, num_initial_equil)
       
 !        Added here in order give a particle an impact
 !        velocity after it's temperature has been equilibrated
-         call add_fix_lammps(lmp)
+         call add_fix_lammps(lmp, particle_velocity)
          
          SIMstep = 0
          ALLOCATE (AVEvirst(3,3,NUMnp))
@@ -286,23 +279,6 @@
          update_all = .false.
          
          call update_lammps_coords(AtomCoord, AtomDispl, update_pad, update_all, lmp)
-!!$         filename = 'out/atom.cfg'
-!!$         CALL IOFILE(filename,'formatted  ',logic,.FALSE.)
-!!$         CALL DUMP_ATOM(Atomcoord,Atomdispl,logic)
-!!$         CLOSE (logic)
-
-         ! --- Initial Lammps Run for zero steps to initialize everything
-!!$         call lammps_command(lmp, "undump 1")
-!!$         write(command_line, fmt='(A18,I4,A55)') "dump 1 all custom ", total_lammps_steps, " atom_lmp*.cfg id type x y z c_dx_all[1], c_dx_all[2]"
-!!$         call lammps_command(lmp, command_line)
-         
-!!$         call lammps_command(lmp, "run 0 pre yes post no")
-        !    --Initialize data
-!!$         DO iatom = 1 , NUMnp
-!!$            IF ( ISRelaxed(iatom)==INDexatom .OR. ISRelaxed(iatom)==INDexinterface ) THEN
-!!$               AVEdispl(1:NDF,iatom) = 0.D0
-!!$            ENDIF
-!!$         ENDDO
          newmd = .false.
          solveFEM = .false.
          ifem = 0

@@ -49,8 +49,8 @@ INCLUDE_DIRECTORIES(../lammps
 
 
 # Create Library for linking into main executable
-set(lammps /home/srinath/lammps.git/src/liblammps_intel.so)
-set(stubs /home/srinath/lammps.git/src/STUBS/libmpi_stubs.a)
+#set(lammps /home/srinath/lammps.git/src/liblammps_intel.so)
+#set(stubs /home/srinath/lammps.git/src/STUBS/libmpi_stubs.a)
 
 add_library(mdlro SHARED ${SRC_FILES} ${INC_FILES})
 target_link_libraries(mdlro lammpsf90 lammpscpp ${lammps} ${stubs})

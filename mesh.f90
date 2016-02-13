@@ -344,7 +344,7 @@
 !$$$            if (bot) then
                Id(1,i) = 1
                Id(2,i) = 1
-               PRINT * , 'BCs on  node' , i
+!!$               PRINT * , 'BCs on  node' , i
             ENDIF
 !
          ENDIF
