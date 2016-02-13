@@ -1573,7 +1573,7 @@
       Npass = 0
 !print *, 'In lostslipcheck'
       DO i = 1 , NDIsl
-         IF ( ELEm_disl(i)/=0 ) THEN
+         IF ( ELEm_disl(i) > 0 ) THEN
             pass = .FALSE.
             r1 = R_Disl(1,i)
             r2 = R_Disl(2,i)
