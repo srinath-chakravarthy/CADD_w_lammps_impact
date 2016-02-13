@@ -82,7 +82,7 @@ SUBROUTINE DUMPDISL_VTK1(Scale,Logic,Umag,B,Ndf)
      xd(3,1:2) = xd(1,1:2) - ds*burgers(1:2,idisl)
      xd(4,1:2) = xd(1,1:2) + ds*burgers(1:2,idisl)
      xd(2,1) = xd(1,1) + ds*cos(theta_e(idisl))*burgers(2,idisl)
-     xd(2,2) = xd(1,2) + ds*cos(theta_e(idisl))*burgers(1,idisl)
+     xd(2,2) = xd(1,2) - ds*cos(theta_e(idisl))*burgers(1,idisl)
      n = n + 1
      lines(1,1,n) = 2
      lines(1,2,n) = 4*(n-1) + 1 - 1
