@@ -136,12 +136,12 @@
 !     and return b=b-utilde(x)+utilde(xd)
 !     and add this new disl to the d.d. side.
 !
-      USE MOD_DD_SLIP
+!      USE MOD_DD_SLIP
       IMPLICIT NONE
 !*--DISL_PASS141
       DOUBLE PRECISION R0(3) , Rd(3) , Burg(3) , B(3,*) , X(3,*)
       DOUBLE PRECISION Th_e , Th_s
-      INTEGER Is_relaxed(*) , Numnp
+      INTEGER Is_relaxed(numnp) , Numnp
       LOGICAL Subtract , Store , nucl
 !
       DOUBLE PRECISION u(3) , ud(3)
