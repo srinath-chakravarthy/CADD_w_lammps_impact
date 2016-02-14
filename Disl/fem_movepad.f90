@@ -201,11 +201,11 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
       DOUBLE PRECISION ddis
       double precision :: ev_convert1
       CHARACTER*80 error_message
-      double precision :: dist2
+      double precision :: dist_dis
                                 !
 !!$!!!!    hacked parameters
       min_pos = -10.0
-      time_step_con = 1000.0d0 * lammps_timestep
+      time_step_con = 1000.0d0 !> Time in femtoseconds
 
       !!--Jun Song: make sure temperature>0.0
       IF ( Temperature<0.0D0 ) THEN
@@ -214,11 +214,12 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
       ENDIF
       ev_convert1 = 0.62415096471d-11 !> Convert from Pa to ev/A^3
       mobility = 5.0d-8 !> Actual value is Pa s
-      mobility = mobility * 1.0d-15 * ev_convert1 !> Converted value is ev/A^3 fs
+      mobility = mobility/1.0d-15 * ev_convert1 * lammps_temperature !> Converted value is ev/A^3 fs
       max_vel = 2.0d3 !> Actual value in m/s
       max_vel = max_vel * 1.0d10/1.0d15 !> Converted to A/fs
       max_ds = max_vel * time_step_con
       sf_f = 0.0 ! zero stacking fault energy for hex al
+      write(*,'(A, 2F15.6)') "Max velocity = ", max_vel, max_ds
 
       !!--JS: 6.242e-2 is unit conversion constant. Do not change
       !!--Change the stacking fault E for different materials
@@ -243,7 +244,8 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
 !!$            IF ( ABS(PK_f(i)*mobility)>max_vel ) then
 !!$               PK_f(i) = max_vel/mobility*PK_f(i)/ABS(PK_f(i))
 !!$            END IF
-            WRITE (*,'(A,I7,2(1X,F15.6))') 'old disl pos = ' , i, R_Disl(1,i) , R_Disl(2,i)
+            WRITE (*,'(A,I7,2(1X,F15.6), 5(1X,E15.6))') 'old disl pos = ' , i, R_Disl(1,i) , R_Disl(2,i), &
+                 time_step_con, mobility, PK_f(i)/mobility, deltas
 
 !!$            IF ( R_Disl(2,i)<=min_pos .OR. PK_f(i)<0.0 ) THEN
             R_Disl(1,i) = R_Disl(1,i) + deltas*BURgers(1,i)/BURg_length(i)
@@ -268,12 +270,15 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
          if (elem_disl(i) > 0) then
             do j = 1, ndisl
                if (elem_disl(j) > 0) then
-                  !! Calculate distance between 2 dislocations
-                  if (dist2(R_disl(1:2,i), R_disl(1:2,j)) > burg_length(j)) then
-                     deltas = 2.d0*burg_length(j)
-                     !! Move the jth dislocation in the direction of the burgers vector
-                     R_disl(1,j) = R_disl(1,j) + deltas*BURgers(1,j)/BURg_length(j)
-                     R_disl(2,j) = R_disl(2,j) + deltas*BURgers(2,j)/BURg_length(j)
+                  if (i /= j) then 
+                     !! Calculate distance between 2 dislocations
+                     dist_dis = sqrt((R_disl(1,i) - R_disl(1,j))**2 + (R_disl(2,i) - R_disl(2,j))**2)
+                     if (dist_dis > burg_length(j)) then
+                        deltas = 2.d0*burg_length(j)
+                        !! Move the jth dislocation in the direction of the burgers vector
+                        R_disl(1,j) = R_disl(1,j) + deltas*BURgers(1,j)/BURg_length(j)
+                        R_disl(2,j) = R_disl(2,j) + deltas*BURgers(2,j)/BURg_length(j)
+                     end if
                   end if
                end if
             end do
