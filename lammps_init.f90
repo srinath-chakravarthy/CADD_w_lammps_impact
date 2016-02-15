@@ -250,9 +250,9 @@ subroutine initialize_lammps(Id,X,Ix,F,B,Itx,lmp)
       call lammps_command(lmp, 'atom_style atomic')
       call lammps_command(lmp, 'dimension 3')
 #ifdef _OPENMP
-                                !$OMP PARALLEL SHARED(num_threads)
+!$OMP PARALLEL SHARED(num_threads)
       num_threads = omp_get_num_threads()
-                                !$OMP END PARALLEL
+!$OMP END PARALLEL
       write(command_line,'(A,I3)') 'package omp ', num_threads
       call lammps_command(lmp, command_line)
       call lammps_command(lmp, 'suffix omp')
@@ -294,9 +294,7 @@ subroutine initialize_lammps(Id,X,Ix,F,B,Itx,lmp)
 
       !! ------- EAM potentials
       call lammps_command(lmp, "pair_style eam/alloy")
-      call lammps_command(lmp, "pair_coeff * * /home/srinath/lammps_potentials/Al-LEA_hex.eam.alloy Al Al Al Al Al")
-!!$   call lammps_command(lmp, "pair_coeff	* * /home/jmartino/lammps/potentials/Al_adams_hex.eam.alloy Al Al Al Al Al")
-!!$   call lammps_command(lmp, "pair_coeff	* * /home/jmartino/lammps/potentials/Al_adams_hex.eam.alloy Al Al Al Al")
+      call lammps_command(lmp, "pair_coeff * * Al-adams_hex.eam.alloy Al Al Al Al Al")
 
       call lammps_command(lmp, "neighbor 0.1 bin ")
       call lammps_command(lmp, "neigh_modify delay 0 every 1 check yes")
@@ -304,48 +302,27 @@ subroutine initialize_lammps(Id,X,Ix,F,B,Itx,lmp)
                                 ! ---------- Various Fixes ----------------------------------------------
       write(command_line,*) "variable mytemp equal", lammps_temperature
       call lammps_command(lmp, command_line)
-!!$   call lammps_command(lmp, "variable mytemp equal 500.0")
       call lammps_command(lmp, "velocity md_atoms create $(2.0*v_mytemp) 426789 dist uniform")
       call lammps_command(lmp, "velocity md_atoms set NULL NULL 0.0 units box")
 
-!!$  	 JM ---------------Particle indenter commands------------
-                                !!        call lammps_command(lmp, "velocity particle_atoms set 0.0 0.0 0.0 units box")
-                                !!        call lammps_command(lmp, "fix 1 particle_atoms setforce 0.0 0.0 0.0")
-                                !!        call lammps_command(lmp, "fix displace particle_atoms move linear NULL -0.5 NULL")
-
-
-!!$		JM --------------Particle Impact commands---------------
-      !!		JM comment all out here and all in for particle indenter commands
-      !!		JM to switch simulation type and vise versa
-      !!        call lammps_command(lmp, "velocity particle_atoms set NULL -1.0 NULL sum yes units box")
-!!$		excess commands...not useful at the moment
-!!$        call lammps_command(lmp, "velocity particle_atoms create 1.0 654812 dist uniform")
-!!$        call lammps_command(lmp, "velocity particle_atoms set NULL NULL 0.0 units box")
-!!$        call lammps_command(lmp, "fix temp_particle particle_atoms nvt temp 1.0 1.0 100.0")
-!!$        call lammps_command(lmp, "fix temp_particle particle_atoms nve")
-
-                                ! ---- Temperature fixes -----------------------------------------------------------
-
-!!$        call lammps_command(lmp, "fix fix_temp free_atoms nvt temp 1.0 1.0 100.0")
-
-
-
       call lammps_command(lmp, "fix fix_integ md_atoms nve")
-!!$	call lammps_command(lmp, "fix fix_temp langevin_atoms langevin $(v_mytemp) $(v_mytemp) 0.01 699693 stadium -76.4334117 76.4334117 -78.45129 78.45129 20.000000 tally yes zero yes")
       write(command_line, fmt='(A38,3(1X,F15.6),I7, A10, 5(1X,F15.6))') "fix fix_temp langevin_atoms langevin ", &
            tstart, tstop, damp_coeff, 699483, " stadium ", stadium_xmin, stadium_xmax, stadium_ymin, stadium_ymax, stadium_width
       call lammps_command(lmp, command_line)
 
-                                ! ----------------------------------------------------------------------------------
+      !! ----------------------------------------------------------------------------------
 
-                                ! ---- Temperature Computes and temperature variance for testing  -------------------------------------
-                                ! ---- This is a 2d Problem so the temperature compute is restricted to partial in the xy plane
+      !! ---- Temperature Computes and temperature variance for testing  -------------------------------------
+      !! ---- This is a 2d Problem so the temperature compute is restricted to partial in the xy plane
+      
       call lammps_command(lmp, "compute free_temp free_atoms temp/partial 1 1 0")
       call lammps_command(lmp, "compute stadium_temp langevin_atoms temp/partial 1 1 0")
-                                !   --- Variables for actual temperature 
+
+      !!   --- Variables for actual temperature 
       call lammps_command(lmp, "variable free_tempv equal c_free_temp")
       call lammps_command(lmp, "variable stadium_tempv equal c_stadium_temp")
-                                ! ---- Canonical Temperature variation 
+
+      !! ---- Canonical Temperature variation 
       call lammps_command(lmp, "variable nfree_atoms equal count(free_atoms)")
       call lammps_command(lmp, "variable nstadium_atoms equal count(langevin_atoms)")
 
@@ -354,55 +331,39 @@ subroutine initialize_lammps(Id,X,Ix,F,B,Itx,lmp)
       call lammps_command(lmp, "variable delt_free equal (c_free_temp-v_mytemp)^2")
       call lammps_command(lmp, "variable delt_stadium equal (c_stadium_temp-v_mytemp)^2")
 
-                                ! ---- average the variance of the temperature 
-!!$        call lammps_command(lmp, "fix free_variance free_atoms ave/time 1 1000 1000 v_delt_free ave running")
-!!$        call lammps_command(lmp, "fix stadium_variance free_atoms ave/time 1 1000 1000 v_delt_stadium ave running")
-
-!!$        call lammps_command(lmp, 'fix print_variance all print 1000 "Temperature Variance =  &
-!!$	   $(f_free_variance) $(f_stadium_variance) $(f_free_variance/v_canonical_free) $(f_stadium_variance/v_canonical_stadium)"')
-
-
-                                ! ------------ Energies -------------------------
+      !! ------------ Energies -------------------------
       call lammps_command(lmp, "compute com_pe free_atoms pe/atom")
       call lammps_command(lmp, "compute pe free_atoms reduce sum c_com_pe")
       call lammps_command(lmp, "compute ke free_atoms ke")
       call lammps_command(lmp, "variable tot_energy equal c_pe+c_ke")
-                                ! ------------------------------------------------------------------------
+      !! ------------------------------------------------------------------------
 
-                                !---- Pad atoms always have zero force so this is fixed here to 0 
+      !!---- Pad atoms always have zero force so this is fixed here to 0 
       call lammps_command(lmp, "fix fix_zeroforce pad_atoms setforce 0.0 0.0 0.0")
-                                !call lammps_command(lmp, "fix fix_2d all enforce2d")
       call lammps_command(lmp, "fix fix_2d all setforce NULL NULL 0.0")
 
 
-                                ! ------------- Various computes -------------------------------
-                                !call lammps_command(lmp, "thermo 1")
-                                !call lammps_command(lmp,"thermo_style custom step c_free_temp c_pe c_stadium_temp v_tot_energy v_y")
-
-                                ! --------- Compute differential displacement from original position
+      !! --------- Compute differential displacement from original position
       call lammps_command(lmp, "compute dx_free md_atoms displace/atom")
 
       call lammps_command(lmp, "compute dx_all all displace/atom")
 
-                                ! ---- Compute used for average displacement of interface atoms  -----
+      !! ---- Compute used for average displacement of interface atoms  -----
       call lammps_command(lmp, "compute dx_inter interface_atoms displace/atom")
 
 
-                                ! ----- Now define a fix to actually calculate the average for interface atoms
+      !! ----- Now define a fix to actually calculate the average for interface atoms
       write(command_line, '(A38, 2(1X,I3), A15)') "fix dx_ave interface_atoms ave/atom 1 ", fem_update_steps, fem_update_steps, " c_dx_inter[1]"
       call lammps_command(lmp, command_line)
-!!$        call lammps_command(lmp, "fix dx_ave interface_atoms ave/atom 1 25 25 c_dx_inter[1]")
       write(command_line,  '(A38, 2(1X,I3), A15)') "fix dy_ave interface_atoms ave/atom 1 ", fem_update_steps, fem_update_steps, " c_dx_inter[2]"
       call lammps_command(lmp, command_line)
-!!$        call lammps_command(lmp, "fix dy_ave interface_atoms ave/atom 1 25 25 c_dx_inter[2]")
-!!$        call lammps_command(lmp, "fix dz_ave interface_atoms ave/atom 1 25 25 c_dx_inter[3]")
 
 
-                                ! ---- Compute used for virial stress on atoms
+      !! ---- Compute used for virial stress on atoms
       call lammps_command(lmp, "compute compute_stress md_atoms stress/atom NULL virial")
 
 
-                                ! ----- Now define a fix to actually calculate the stress average for all atoms
+      !! ----- Now define a fix to actually calculate the stress average for all atoms
       call lammps_command(lmp, "fix stress_ave_xx md_atoms ave/atom 1 25 25 c_compute_stress[1]")
       call lammps_command(lmp, "fix stress_ave_yy md_atoms ave/atom 1 25 25 c_compute_stress[2]")
       call lammps_command(lmp, "fix stress_ave_zz md_atoms ave/atom 1 25 25 c_compute_stress[3]")
@@ -416,41 +377,15 @@ subroutine initialize_lammps(Id,X,Ix,F,B,Itx,lmp)
       call lammps_extract_global(yhi, lmp, 'boxyhi')
 
 
-                                ! ---- Dump data file 
+      !! ---- Dump data file 
       write(command_line, '(A18,I3,A86)') "dump 1 all custom ", lammps_output_steps, " atom_lmp*.cfg id type x y z c_dx_all[1] c_dx_all[2] vx vy vz c_dx_all[4] f_fix_temp"
       call lammps_command(lmp, command_line)
-!!$        call lammps_command(lmp, "dump 1 all custom 200 atom_lmp*.cfg id type x y z c_dx_all[1] c_dx_all[2] fx fy fz")       
 
       !!let lammps equilibrate for 10 picoseconds, then call indenter
       !!place this call in another subroutine called equilibrate lammps
       call lammps_command(lmp, "run 0")
 
-      !!reset the timestep to 0 for the lammps indenter
-      !!call lammps_command(lmp, "reset_timestep 0")
-
-!!$		JM ----------LAMMPS particle indenter commands ---------
-      !!write(command_line, '(A30,I3)') "variable indenterupdate equal ", lammps_output_steps
-      !!call lammps_command(lmp, command_line)
-      !!call lammps_command(lmp, "variable moveindenter equal 'step%v_indenterupdate'")
-
-!!!
-      !!write(command_line, '(A74)') "if '${moveindenter} == 0' then 'variable y equal \'100.0 + -1.0*step*dt\''"
-      !!write(command_line, '(A76)') "if ""${moveindenter} == 0"" then ""variable y equal '100.0 + -1.0*step*dt'"""
-      !!call lammps_command(lmp, command_line)
-!!!
-
-      !!call lammps_command(lmp, "if ""${moveindenter} == 0"" then ""variable y equal '100.0 + -1.0*step*dt'""")
-      !!call lammps_command(lmp, "variable y equal '100.0 + -1.0*step*dt'")
-      !!call lammps_command(lmp, "fix indenter free_atoms indent 10.0 cylinder z 0.0 v_y 100.0 units box")
-
-!!$ ------------- Various computes -------------------------------
-      !!call lammps_command(lmp, "thermo 1")
-      !!call lammps_command(lmp,"thermo_style custom step c_free_temp c_pe c_stadium_temp v_tot_energy v_y")
-
       call lammps_command(lmp, "run 0")
-!!$add this call to another subroutine called add lammps fix post init
-      !!call lammps_command(lmp, "velocity particle_atoms set NULL -1.0 NULL sum yes units box")
-
 end subroutine initialize_lammps
 
 
