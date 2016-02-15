@@ -13,6 +13,28 @@ endif ()
 option (USE_OPENMP "Compile with OpenMP support (for Lammps)" OFF)
 
 
+if (USE_OPENMP)
+    include (FindOpenMP)
+    if (OPENMP_FOUND)
+        set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+	set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${OpenMP_Fortran_FLAGS}")
+	set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -parallel")
+	set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -opt-report-phase=par")
+	set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -opt-report=5")
+	set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -opt-report-file=stdout")
+	set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -parallel")
+	set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -parallel")
+        list (APPEND MODULE_LIST "openmp")
+	set(lammps /home/srinath/lammps.git/src/liblammps_intel_openmp.so)
+      endif ()
+    else()
+      set(lammps /home/srinath/lammps.git/src/liblammps_intel.so)
+endif ()
+
+
+
 # list of source files
 INCLUDE_DIRECTORIES(  lammps
   ${CMAKE_BINARY_DIR}/lammps
@@ -22,8 +44,6 @@ INCLUDE_DIRECTORIES(  lammps
   ${CMAKE_BINARY_DIR}/Modular
  )
 
-#FILE(GLOB SRC_FILES *.f90)
-#FILE(GLOB INC_FILES *.par)
 set(SRC_FILES
   lammps_init.f90
   mesh.f90
@@ -107,29 +127,6 @@ add_exe_flags(-lz)
 set(lammpsf90 ${CMAKE_SOURCE_DIR}/lammps/LAMMPS.o)
 set(lammpscpp ${CMAKE_SOURCE_DIR}/lammps/LAMMPS-wrapper.o)
 set(stubs /home/srinath/lammps.git/src/STUBS/libmpi_stubs.a)
-
-
-if (USE_OPENMP)
-    include (FindOpenMP)
-    if (OPENMP_FOUND)
-        set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-	set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${OpenMP_Fortran_FLAGS}")
-	set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -parallel")
-	set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -opt-report-phase=par")
-	set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -opt-report=5")
-	set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -opt-report-file=stdout")
-	set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -parallel")
-	set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -parallel")
-        list (APPEND MODULE_LIST "openmp")
-	set(lammps /home/srinath/lammps.git/src/liblammps_intel_openmp.so)
-      endif ()
-    else()
-      set(lammps /home/srinath/lammps.git/src/liblammps_intel.so)
-endif ()
-
-
 
 # Add executable 
 add_executable(CADD ${SRC_FILES} ${INC_FILES})
