@@ -189,7 +189,7 @@ END SUBROUTINE FE_TRICOORD
 !!$!!!!!!!!dw/cs added subroutine!!!!!!!!!!!!!!!!!!
 SUBROUTINE MOVE_DIS(Alpha,Temperature)
       USE MOD_DISL_PARAMETERS
-      USE MOD_GLOBAL
+!!$      USE MOD_GLOBAL
       IMPLICIT NONE
 !!$!*--MOVE_DIS197
       DOUBLE PRECISION Alpha , mobility , max_vel, max_ds

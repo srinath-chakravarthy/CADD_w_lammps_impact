@@ -1130,7 +1130,7 @@
             IF ( Key=='stra' ) WRITE (Logic,'(6(1x,e15.6))')&
      &                                nstrain(1,1,i) , nstrain(2,2,i) , &
      &                                nstrain(1,2,i)
-            virist(:,:) = AVEvirst(:,:,i)*fact
+            virist(:,:) = AVEvirst(:,:,i)*fact2
             nstr1(:,:) = nstrain(:,:,i)*fact
             IF ( Key=='viri' ) THEN
                IF ( ISRelaxed(i)==1 .OR. ISRelaxed(i)==2 ) THEN
