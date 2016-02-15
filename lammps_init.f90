@@ -294,7 +294,7 @@ subroutine initialize_lammps(Id,X,Ix,F,B,Itx,lmp)
 
       !! ------- EAM potentials
       call lammps_command(lmp, "pair_style eam/alloy")
-      call lammps_command(lmp, "pair_coeff * * Al-adams_hex.eam.alloy Al Al Al Al Al")
+      call lammps_command(lmp, "pair_coeff * * Al_adams_hex.eam.alloy Al Al Al Al Al")
 
       call lammps_command(lmp, "neighbor 0.1 bin ")
       call lammps_command(lmp, "neigh_modify delay 0 every 1 check yes")
