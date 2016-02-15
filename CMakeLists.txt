@@ -10,7 +10,8 @@ if (NOT CMAKE_BUILD_TYPE)
   set (CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS} -O1")
 endif ()
 
-option (USE_OPENMP "Compile with OpenMP support (for Lammps)" OFF)
+option (USE_OPENMP "Compile with OpenMP support (for parallel assembly)" OFF)
+
 
 # list of source files
 INCLUDE_DIRECTORIES(  lammps
@@ -100,12 +101,14 @@ add_ff_flags(-shared-intel)
 add_ff_flags(-fpp)
 add_ff_flags(-fPIC)
 add_ff_flags(-cxxlib)
+#add_ff_flags(-lm)
 add_sh_flags(-lz)
-add_exe_flags(-lz)
+#add_sh_flags(-lstdc++)
+#add_sh_flags(-lm)
 
-set(lammpsf90 ${CMAKE_SOURCE_DIR}/lammps/LAMMPS.o)
-set(lammpscpp ${CMAKE_SOURCE_DIR}/lammps/LAMMPS-wrapper.o)
-set(stubs /home/srinath/lammps.git/src/STUBS/libmpi_stubs.a)
+#add_exe_flags(-lstdc++)
+#add_exe_flags(-lm)
+add_exe_flags(-lz)
 
 
 if (USE_OPENMP)
@@ -118,7 +121,7 @@ if (USE_OPENMP)
 	set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -parallel")
 	set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -opt-report-phase=par")
 	set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -opt-report=5")
-	set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -opt-report-file=stdout")
+	#set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -opt-report-file=stdout")
 	set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -parallel")
 	set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -parallel")
         list (APPEND MODULE_LIST "openmp")
@@ -130,10 +133,17 @@ endif ()
 
 
 
+set(lammpsf90 ${CMAKE_SOURCE_DIR}/lammps/LAMMPS.o)
+set(lammpscpp ${CMAKE_SOURCE_DIR}/lammps/LAMMPS-wrapper.o)
+#set(lammps /home/srinath/lammps.git/src/liblammps_intel.so)
+set(stubs /home/srinath/lammps.git/src/STUBS/libmpi_stubs.a)
+
+
 # Add executable 
 add_executable(CADD ${SRC_FILES} ${INC_FILES})
-target_link_libraries(CADD dislo mdlro lammpsf90 lammpscpp lammps)
+target_link_libraries(CADD dislo mdlro lammpsf90 lammpscpp ${lammps} ${stubs})
+#add_dependencies(CADD dislo lammpsf90 lammpscpp ${lammps} ${stubs} mdlro)
 
-if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
-  message(FATAL_ERROR "Sorry CADD does not compile with gfortran. Please choose an other compiler by s#etting the variable CMAKE_Fortran_COMPILER")
-endif()
+#if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+#  message(FATAL_ERROR "Sorry CADD does not compile with gfortran. Please choose an other compiler by s#etting the variable CMAKE_Fortran_COMPILER")
+#endif()
