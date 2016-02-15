@@ -11,6 +11,39 @@ if (NOT CMAKE_BUILD_TYPE)
 endif ()
 
 option (USE_OPENMP "Compile with OpenMP support (for Lammps)" OFF)
+option (USE_LAMMPS "Compile with Lammps support " ON)
+
+if (USE_LAMMPS)
+  set(LAMMPS_DIR CACHE PATH "Manual Lammps Directory")
+  find_library(LAMMPS_LIBRARY lammps "${LAMMS_DIR}/src")
+  if (${LAMMPS_LIBRARY} STREQUAL "LAMMPS_LIBRARY-NOTFOUND")
+    message (FATAL_ERROR "Lammps library not found (required for CADD_w_lammps)")
+  endif ()
+  set(LAMMPS_C_FLAGS " ")
+  set(LAMMPS_CXX_FLAGS "-lz ")
+  set(LAMMPS_Fortran_FLAGS " ")
+
+  
+  add_definitions (${LAMMS_C_FLAGS})
+  add_definitions (${LAMMS_CXX_FLAGS})
+  add_definitions (${LAMMS_C_FortranLAGS})
+
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LAMMPS_C_FLAGS}")
+  set (CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} ${LAMMPS_CXX_FLAGS}")
+  set (CMAKE_C_FLAGS "${CMAKE_Fortran_FLAGS} ${LAMMPS_Fortran_FLAGS}")
+
+
+  list (APPEND EXT_LIBS ${LAMMPS_LIBRARY})
+  include_directories("${LAMMPS_DIR}/src")
+  find_library(STUBS_LIB mpi_stubs "{LAMMPS_DIR/src/STUBS}")
+  if (${STUBS_LIB} STREQUAL "STUBS_LIB-NOTFOUND")
+    message (FATAL_ERROR "MPI STUBS library not found (required for CADD_w_lammps)")
+  endif ()
+  list (APPEND EXT_LIBS ${STUBS_LIB})
+  list (APPEND MODULE_LIST "lammps")
+
+endif()
+
 
 
 if (USE_OPENMP)
@@ -27,10 +60,10 @@ if (USE_OPENMP)
 	set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -parallel")
 	set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -parallel")
         list (APPEND MODULE_LIST "openmp")
-	set(lammps /home/srinath/lammps.git/src/liblammps_intel_openmp.so)
+	#set(lammps /home/srinath/lammps.git/src/liblammps_intel_openmp.so)
       endif ()
     else()
-      set(lammps /home/srinath/lammps.git/src/liblammps_intel.so)
+      #set(lammps /home/srinath/lammps.git/src/liblammps_intel.so)
 endif ()
 
 
@@ -130,7 +163,7 @@ set(stubs /home/srinath/lammps.git/src/STUBS/libmpi_stubs.a)
 
 # Add executable 
 add_executable(CADD ${SRC_FILES} ${INC_FILES})
-target_link_libraries(CADD dislo mdlro lammpsf90 lammpscpp ${lammps} ${stubs})
+target_link_libraries(CADD dislo mdlro lammpsf90 lammpscpp ${EXT_LIBS})
 
 if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
   message(FATAL_ERROR "Sorry CADD does not compile with gfortran. Please choose an other compiler by s#etting the variable CMAKE_Fortran_COMPILER")
