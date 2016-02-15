@@ -202,57 +202,49 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
       double precision :: ev_convert1
       CHARACTER*80 error_message
       double precision :: dist_dis
-                                !
-!!$!!!!    hacked parameters
-      min_pos = -10.0
-      time_step_con = 1000.0d0 !> Time in femtoseconds
 
-      !!--Jun Song: make sure temperature>0.0
+!
+!!!!    hacked parameters
+      min_pos = -10.0
+      time_step_con = 5.0E-4
+!C--Jun Song: make sure temperature>0.0
       IF ( Temperature<0.0D0 ) THEN
          WRITE (*,*) "Temperature less than Zero!!!"
          STOP
       ENDIF
-      ev_convert1 = 0.62415096471d-11 !> Convert from Pa to ev/A^3
-      mobility = 5.0d-8 !> Actual value is Pa s
-      mobility = mobility/1.0d-15 * ev_convert1 * lammps_temperature !> Converted value is ev/A^3 fs
-      max_vel = 2.0d3 !> Actual value in m/s
-      max_vel = max_vel * 1.0d10/1.0d15 !> Converted to A/fs
-      max_ds = max_vel * time_step_con
-      sf_f = 0.0 ! zero stacking fault energy for hex al
-      write(*,'(A, 2F15.6)') "Max velocity = ", max_vel, max_ds
-
-      !!--JS: 6.242e-2 is unit conversion constant. Do not change
-      !!--Change the stacking fault E for different materials
-      !!mobility = time_step_con/(6.242E-2*5.0E-8*Temperature)
-      !! 3rd parameter (5.0e-8) is damp coef from Olmstead paper
-      !! "Atomistic simulations of dislocation mobility.."
-!!$      max_vel = time_step_con*2000.0
-!!$      sf_f = .089*6.242E-2 ! sf energy in J/m2,i.e., 0.089
+ 
+!C--JS: 6.242e-2 is unit conversion constant. Do not change
+!C--Change the stacking fault E for different materials
+      mobility = time_step_con/(6.242E-2*5.0E-8*Temperature)
+        ! 3rd parameter (5.0e-8) is damp coef from Olmstead paper
+        ! "Atomistic simulations of dislocation mobility.."
+      max_vel = time_step_con*2000.0
+      sf_f = .089*6.242E-2 ! sf energy in J/m2,i.e., 0.089
+      sf_f = 0.0d0 ! hex al no stacking fault eneregy
 !!!!    end of hacked parameters
-
+ 
       DO i = 1 , NDIsl
-         IF ( ELEm_disl(i)>0 ) THEN
-            PK_f(i) = (PK_force(1,i)*BURgers(1,i)+PK_force(2,i) *BURgers(2,i))/BURg_length(i)
+         IF ( ELEm_disl(i) > 0 ) THEN
+            PK_f(i) = (PK_force(1,i)*BURgers(1,i)+PK_force(2,i)&
+     &                *BURgers(2,i))/BURg_length(i)
+!            write(*,*) i,' non sf disl force = ',pk_f(i)
             ddis = SQRT(R_Disl(1,i)**2+R_Disl(2,i)**2)
             PK_f(i) = PK_f(i) + sf_f
-!!$        upper limit on velocities
-            deltas = PK_f(i) * time_step_con/mobility
-            if (deltas > max_ds) then
-               deltas = max_ds
-            end if
-
-!!$            IF ( ABS(PK_f(i)*mobility)>max_vel ) then
-!!$               PK_f(i) = max_vel/mobility*PK_f(i)/ABS(PK_f(i))
-!!$            END IF
-            WRITE (*,'(A,I7,2(1X,F15.6), 5(1X,E15.6))') 'old disl pos = ' , i, R_Disl(1,i) , R_Disl(2,i), &
-                 time_step_con, mobility, PK_f(i)/mobility, deltas
-
+!!!!        upper limit on velocities
+            IF ( ABS(PK_f(i)*mobility)>max_vel ) PK_f(i)&
+     &           = max_vel/mobility*PK_f(i)/ABS(PK_f(i))
+            write(*,*) 'old disl pos = ',i, r_disl(1, i), r_disl(2, i)
+!            write(*,*) i,' total disl force = ',pk_f(i)
+!            if(r_disl(2,i).gt.-100.0.or.pk_f(i).gt.0.0) then
 !!$            IF ( R_Disl(2,i)<=min_pos .OR. PK_f(i)<0.0 ) THEN
-            R_Disl(1,i) = R_Disl(1,i) + deltas*BURgers(1,i)/BURg_length(i)
-            R_Disl(2,i) = R_Disl(2,i) + deltas*BURgers(2,i)/BURg_length(i)
+               R_Disl(1,i) = R_Disl(1,i) + mobility*PK_f(i)*BURgers(1,i)&
+     &                       /BURg_length(i)
+               R_Disl(2,i) = R_Disl(2,i) + mobility*PK_f(i)*BURgers(2,i)&
+     &                       /BURg_length(i)
 !!$            ENDIF
-            WRITE (*,'(A,I7,3(1X,F15.6))') 'new disl pos = ' , i, R_Disl(1,i) , R_Disl(2,i), deltas
-            WRITE (*,*) ' '
+!            endif
+            WRITE (*,*) 'new disl pos = ' , i, R_Disl(1,i) , R_Disl(2,i)
+            write(*,*) ' '
             elem_old = ELEm_disl(i)
             ELEm_disl(i) = FE_LOCATE(R_Disl(1,i),ELEm_disl(i))
             IF ( ELEm_disl(i)==0 ) THEN
@@ -264,24 +256,87 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
             ENDIF
          ENDIF
       ENDDO
-      !! ---- Check for collisions with existing dislocations
-      !! --- This is the simplest possible algorithm... needs to be modified if full DD exisits
-      do i = 1, ndisl
-         if (elem_disl(i) > 0) then
-            do j = 1, ndisl
-               if (elem_disl(j) > 0) then
-                  if (i /= j) then 
-                     !! Calculate distance between 2 dislocations
-                     dist_dis = sqrt((R_disl(1,i) - R_disl(1,j))**2 + (R_disl(2,i) - R_disl(2,j))**2)
-                     if (dist_dis > burg_length(j)) then
-                        deltas = 2.d0*burg_length(j)
-                        !! Move the jth dislocation in the direction of the burgers vector
-                        R_disl(1,j) = R_disl(1,j) + deltas*BURgers(1,j)/BURg_length(j)
-                        R_disl(2,j) = R_disl(2,j) + deltas*BURgers(2,j)/BURg_length(j)
-                     end if
-                  end if
-               end if
-            end do
-         end if
-      end do
+
+      
+!!!!    !!hacked parameters
+!!$      min_pos = -10.0
+!!$      time_step_con = 1000.0d0 !> Time in femtoseconds
+!!$
+!!$      !!--Jun Song: make sure temperature>0.0
+!!$      IF ( Temperature<0.0D0 ) THEN
+!!$         WRITE (*,*) "Temperature less than Zero!!!"
+!!$         STOP
+!!$      ENDIF
+!!$      ev_convert1 = 0.62415096471d-11 !> Convert from Pa to ev/A^3
+!!$      mobility = 5.0d-8 !> Actual value is Pa s
+!!$      mobility = mobility/1.0d-15 * ev_convert1 * lammps_temperature !> Converted value is ev/A^3 fs
+!!$      max_vel = 2.0d3 !> Actual value in m/s
+!!$      max_vel = max_vel * 1.0d10/1.0d15 !> Converted to A/fs
+!!$      max_ds = max_vel * time_step_con
+!!$      sf_f = 0.0 ! zero stacking fault energy for hex al
+!!$      write(*,'(A, 2F15.6)') "Max velocity = ", max_vel, max_ds
+!!$
+!!$      !!--JS: 6.242e-2 is unit conversion constant. Do not change
+!!$      !!--Change the stacking fault E for different materials
+!!$      !!mobility = time_step_con/(6.242E-2*5.0E-8*Temperature)
+!!$      !! 3rd parameter (5.0e-8) is damp coef from Olmstead paper
+!!$      !! "Atomistic simulations of dislocation mobility.."
+!!$      !!max_vel = time_step_con*2000.0
+!!$      !!sf_f = .089*6.242E-2 ! sf energy in J/m2,i.e., 0.089
+!!$!!!!    end of hacked parameters
+!!$
+!!$      DO i = 1 , NDIsl
+!!$         IF ( ELEm_disl(i)>0 ) THEN
+!!$            PK_f(i) = (PK_force(1,i)*BURgers(1,i)+PK_force(2,i) *BURgers(2,i))/BURg_length(i)
+!!$            ddis = SQRT(R_Disl(1,i)**2+R_Disl(2,i)**2)
+!!$            PK_f(i) = PK_f(i) + sf_f
+        !!upper limit on velocities
+!!$            deltas = PK_f(i) * time_step_con/mobility
+!!$            if (deltas > max_ds) then
+!!$               deltas = max_ds
+!!$            end if
+!!$
+            !!IF ( ABS(PK_f(i)*mobility)>max_vel ) then
+               !!PK_f(i) = max_vel/mobility*PK_f(i)/ABS(PK_f(i))
+            !!END IF
+!!$            WRITE (*,'(A,I7,2(1X,F15.6), 5(1X,E15.6))') 'old disl pos = ' , i, R_Disl(1,i) , R_Disl(2,i), &
+!!$                 time_step_con, mobility, PK_f(i)/mobility, deltas
+!!$
+            !!IF ( R_Disl(2,i)<=min_pos .OR. PK_f(i)<0.0 ) THEN
+!!$            R_Disl(1,i) = R_Disl(1,i) + deltas*BURgers(1,i)/BURg_length(i)
+!!$            R_Disl(2,i) = R_Disl(2,i) + deltas*BURgers(2,i)/BURg_length(i)
+            !!ENDIF
+!!$            WRITE (*,'(A,I7,3(1X,F15.6))') 'new disl pos = ' , i, R_Disl(1,i) , R_Disl(2,i), deltas
+!!$            WRITE (*,*) ' '
+!!$            elem_old = ELEm_disl(i)
+!!$            ELEm_disl(i) = FE_LOCATE(R_Disl(1,i),ELEm_disl(i))
+!!$            IF ( ELEm_disl(i)==0 ) THEN
+!!$               IF ( elem_old>0 ) THEN
+!!$                  ELEm_disl(i) = -elem_old
+!!$               ELSE
+!!$                  ELEm_disl(i) = elem_old
+!!$               ENDIF
+!!$            ENDIF
+!!$         ENDIF
+!!$      ENDDO
+!!$      !! ---- Check for collisions with existing dislocations
+!!$      !! --- This is the simplest possible algorithm... needs to be modified if full DD exisits
+!!$      do i = 1, ndisl
+!!$         if (elem_disl(i) > 0) then
+!!$            do j = 1, ndisl
+!!$               if (elem_disl(j) > 0) then
+!!$                  if (i /= j) then 
+!!$                     !! Calculate distance between 2 dislocations
+!!$                     dist_dis = sqrt((R_disl(1,i) - R_disl(1,j))**2 + (R_disl(2,i) - R_disl(2,j))**2)
+!!$                     if (dist_dis > burg_length(j)) then
+!!$                        deltas = 2.d0*burg_length(j)
+!!$                        !! Move the jth dislocation in the direction of the burgers vector
+!!$                        R_disl(1,j) = R_disl(1,j) + deltas*BURgers(1,j)/BURg_length(j)
+!!$                        R_disl(2,j) = R_disl(2,j) + deltas*BURgers(2,j)/BURg_length(j)
+!!$                     end if
+!!$                  end if
+!!$               end if
+!!$            end do
+!!$         end if
+!!$      end do
 END SUBROUTINE MOVE_DIS

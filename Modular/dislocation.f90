@@ -748,6 +748,7 @@
                         ifactor = 1
                      ENDIF
                      xd(1:2)=xd(1:2)+20.0d0*ifactor*bvec(1:2)
+                     !! Try to place the dilsocation 
 
 !!$                     CALL FINDSLIPPLANE(bvec,x0,ifactor,islp,theta_s,&
 !!$     &                                  s_dis,xd,xi)
@@ -758,12 +759,12 @@
 !
                      call FindImageLocation(xi,ifactor,x0,bvec(1:3),ix,x,nxdm,numnp,numel,nen1)
                      theta_e = itheta*PI
-                     WRITE (*,'(A,3F15.6)') 'dislocation at ' , x0
-                     WRITE (*,'(A,3F15.6)') 'passed to ' , xd
+                     WRITE (*,'(A,3F15.6)', advance = 'no') 'dislocation at ' , x0
+                     WRITE (*,'(A,3F15.6)') ' passed to ' , xd
                      WRITE (*,'(A,3F15.6)') 'Image Location' , xi
                      WRITE (*,'(A,3F15.6)') 'with b=' , bvec(1:3)
-                     WRITE (*,'(A,F15.6)') 'and theta_e=' , theta_e
-                     WRITE (*,'(A,F15.6)') 'and theta_s=' , theta_s
+                     WRITE (*,'(A,F15.6)', advance = 'no') ' and theta_e=' , theta_e
+                     WRITE (*,'(A,F15.6)') ' and theta_s=' , theta_s
  
                      CALL DISL_PASS(x0,xd,bvec(1:3),theta_e,theta_s,X,B,Isrelaxed,Numnp,.TRUE.,.TRUE.)
                      itheta=mod(itheta+1,2)

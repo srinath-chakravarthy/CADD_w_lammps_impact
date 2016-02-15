@@ -876,7 +876,8 @@
  
 !***********************************************************************
       SUBROUTINE DUMPIT_VTK(X,Ix,B,Db,Id,F,Dr,Scale,Logic,Key,Index, Umag)
-      USE MOD_GLOBAL
+            USE MOD_GLOBAL
+            USE MOD_MATERIAL
       IMPLICIT NONE
 !*--DUMPIT_VTK821
 !
@@ -900,10 +901,12 @@
       DOUBLE PRECISION :: sout1(3) , sout2(3) , sout3(3)
 !     New Variable for vtk
       INTEGER ndf22
-      DOUBLE PRECISION :: ev_convert , fact
+      DOUBLE PRECISION :: ev_convert , fact, fact2, atom_vol
       ev_convert = 1.602176462
 !     Converts from ev/A^3 to MPa
       fact = 1.D0/(ev_convert)/1.D-5
+      atom_vol = Material(1)%A0**3/4.d0
+      fact2 = fact/atom_vol
  
 !
       numtri = NUMel
