@@ -747,7 +747,7 @@
                      ELSE
                         ifactor = 1
                      ENDIF
-                     xd(1:2)=xd(1:2)+20.0d0*ifactor*bvec(1:2)
+                     xd(1:2)=xd(1:2)+30.0d0*ifactor*bvec(1:2)
                      !! Try to place the dilsocation 
 
 !!$                     CALL FINDSLIPPLANE(bvec,x0,ifactor,islp,theta_s,&

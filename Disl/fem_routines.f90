@@ -508,9 +508,18 @@
       ENDDO
 !
 !       set the closeness to the interface allowed.
-!
-      Range(2) = Range(2) - RANGETOL
-      Range(1) = Range(1) + RANGETOL
+                                !
+      if (range(2) < 0.0d0) then 
+         Range(2) = Range(2) - RANGETOL - 15.0d0
+      else
+         range(2) = range(2) + rangetol + 15.0d0
+      end if
+      if (range(1) < 0.0) then
+         range(1) = range(1) - rangetol - 15.0d0
+      else
+         Range(1) = Range(1) + RANGETOL + 15.0d0
+      end if
+      
       IF ( Index==1 ) THEN
          WRITE (*,*) 'X-range for the dislocation' , Range(1) , Range(2)
       ELSE

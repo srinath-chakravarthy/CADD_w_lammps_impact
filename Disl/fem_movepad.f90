@@ -220,7 +220,7 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
         ! "Atomistic simulations of dislocation mobility.."
       max_vel = time_step_con*2000.0
       sf_f = .089*6.242E-2 ! sf energy in J/m2,i.e., 0.089
-      sf_f = 0.0d0 ! hex al no stacking fault eneregy
+      !!!sf_f = 0.0d0 ! hex al no stacking fault eneregy
 !!!!    end of hacked parameters
  
       DO i = 1 , NDIsl
@@ -236,12 +236,12 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
             write(*,*) 'old disl pos = ',i, r_disl(1, i), r_disl(2, i)
 !            write(*,*) i,' total disl force = ',pk_f(i)
 !            if(r_disl(2,i).gt.-100.0.or.pk_f(i).gt.0.0) then
-!!$            IF ( R_Disl(2,i)<=min_pos .OR. PK_f(i)<0.0 ) THEN
+            IF ( R_Disl(2,i)<=min_pos .OR. PK_f(i)<0.0 ) THEN
                R_Disl(1,i) = R_Disl(1,i) + mobility*PK_f(i)*BURgers(1,i)&
      &                       /BURg_length(i)
                R_Disl(2,i) = R_Disl(2,i) + mobility*PK_f(i)*BURgers(2,i)&
      &                       /BURg_length(i)
-!!$            ENDIF
+            ENDIF
 !            endif
             WRITE (*,*) 'new disl pos = ' , i, R_Disl(1,i) , R_Disl(2,i)
             write(*,*) ' '
