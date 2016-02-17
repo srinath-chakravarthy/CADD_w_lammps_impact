@@ -1581,14 +1581,21 @@
             r = SQRT(r1**2+r2**2)
 !$$$            print *, 'In lostslipcheck', i, r1, disl_range(1,i),
 !$$$     $           r2, disl_range(2,i)
-            IF ( ABS(r1)<ABS(DISl_range(1,i)) ) THEN
-               IF ( ABS(r2)<ABS(DISl_range(2,i)) ) pass = .TRUE.
-               Npass = Npass + 1
-            ENDIF
+	    if (abs(r1) <= abs(disl_residence(1,1,i)) .and. abs(r1) <= abs(disl_residence(2,1,i))) then 
+		if (abs(r2) <= abs(disl_residence(1,2,i)) .and. abs(r2) <= abs(disl_residence(2,2,i))) then 
+		pass = .TRUE. 
+		Npass = Npass + 1
+		end if
+	    end if	
+
+!!$            IF ( ABS(r1)<ABS(DISl_range(1,i)) ) THEN
+!!$               IF ( ABS(r2)<ABS(DISl_range(2,i)) ) pass = .TRUE.
+!!$               Npass = Npass + 1
+!!$            ENDIF
             IF ( pass ) THEN
-               PRINT * , 'Entering PasstoAtomistic' , i , r , &
-     &               DISl_range(DISl_index(i),i) , ELEm_disl(i) , &
-     &               R_Old(1:2,i) , R_Disl(1:2,i)
+	       write(*,'(A,I4,4(1X,E15.6),I7,4(1X,E15.6))') 'Entering PasstoAtomistic' , i, &
+	       disl_residence(1:2,1,i), disl_residence(1:2,2,i), & 
+		ELEM_disl(i), R_old(1:2,i), R_Disl(1:2,i)
 !           if(r.lt.disl_range(1,i).or.r.gt.disl_range(2,i)) then
                CALL PASSTOATOMISTIC(R_Disl(1,i),R_Old(1,i),BURgers(1,i),&
      &                              THEta_e(i),THEta_s(i),Ix,X,B,&
