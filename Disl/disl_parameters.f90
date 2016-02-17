@@ -51,6 +51,7 @@
       DOUBLE PRECISION :: pk_force(2,MAX_DISL) , pk_f(MAX_DISL)
       DOUBLE PRECISION :: disl_range(2,MAX_DISL) , r_old(3,MAX_DISL)
       DOUBLE PRECISION :: disl_residence(2,2,MAX_disl) !> @var containing both x and y coordinates for range of dislocation
+      DOUBLE PRECISION :: disl_line(3,MAX_DISL), disl_image(MAX_disl)
       LOGICAL MOVedisl1
       COMMON /KMVDIS/ MOVedisl1
  
