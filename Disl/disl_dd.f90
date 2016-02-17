@@ -258,8 +258,7 @@
             CALL FE_STRESS(ELEm_disl(i),Rhs,PK_stress(1,i))
             DO j = 1 , NDIsl
                IF ( j/=i ) THEN
-                  CALL DISL_S(R_Disl(1,j),BURgers(1,j),R_Disl(1,i),&
-     &                        s_out,THEta_s(j))
+                  CALL DISL_S(R_Disl(1,j),BURgers(1,j),R_Disl(1,i),s_out,THEta_s(j))
                   DO k = 1 , 3
 !$$$  write(*,*) ' pk_stress', pk_stress(k,i)
                      PK_stress(k,i) = PK_stress(k,i) + s_out(k)
