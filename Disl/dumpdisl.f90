@@ -63,7 +63,7 @@ SUBROUTINE DUMPDISL_VTK1(Scale,Logic,Umag,B,Ndf)
   DOUBLE PRECISION :: sd , xd(4,3)
   INTEGER , DIMENSION(:,:,:) , ALLOCATABLE :: lines
   DOUBLE PRECISION :: cosi , sini , ds , ds2 , bsign
-  ds = 50.0D0
+  ds = 10.0D0
   ds2 = ds/2.D0
 
 
@@ -81,8 +81,8 @@ SUBROUTINE DUMPDISL_VTK1(Scale,Logic,Umag,B,Ndf)
      xd(1,1:2) = r_disl(1:2, idisl)
      xd(3,1:2) = xd(1,1:2) - ds*burgers(1:2,idisl)
      xd(4,1:2) = xd(1,1:2) + ds*burgers(1:2,idisl)
-     xd(2,1) = xd(1,1) + ds*cos(theta_e(idisl))*burgers(2,idisl)
-     xd(2,2) = xd(1,2) - ds*cos(theta_e(idisl))*burgers(1,idisl)
+     xd(2,1) = xd(1,1) + ds*burgers(2,idisl)
+     xd(2,2) = xd(1,2) - ds*burgers(1,idisl)
      n = n + 1
      lines(1,1,n) = 2
      lines(1,2,n) = 4*(n-1) + 1 - 1

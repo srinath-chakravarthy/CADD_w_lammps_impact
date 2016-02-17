@@ -109,7 +109,7 @@
          THEta_s(NDIsl) = Th_s
          PRINT * , 'In element: ' , ELEm_disl(NDIsl)
          IF ( ELEm_disl(NDIsl)/=0 ) then 
-            CALL SLIPRANGE(Bv,R0,DISl_range(1,NDIsl),DISl_index(NDIsl))
+            CALL SLIPRANGE(Bv,R0,DISl_range(1,NDIsl),DISl_index(NDIsl), disl_residence(1:2,1:2,ndisl))
          END IF
 !
       ELSE

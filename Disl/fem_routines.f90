@@ -447,13 +447,14 @@
       END SUBROUTINE FINDENTRYPOINT
 !*==sliprange.spg  processed by SPAG 6.70Rc at 12:39 on 29 Oct 2015
 !***********************************************************************
-      SUBROUTINE SLIPRANGE(B,R,Range,Index)
+      SUBROUTINE SLIPRANGE(B,R,Range,Index, xyrange)
       USE MOD_FEM_PARAMETERS
       IMPLICIT NONE
 !*--SLIPRANGE460
       DOUBLE PRECISION B(3) , R(2) , Range(2) , xint(2) , RANGETOL
+      DOUBLE PRECISION :: XYRANGE(2,2)
       PARAMETER (RANGETOL=0.5)
-      INTEGER Index , i
+      INTEGER Index , i, indx
       LOGICAL BETWEEN
       DOUBLE PRECISION a1 , a2 , a3 , bot , TOL
       PARAMETER (TOL=1.E-6)
@@ -484,8 +485,32 @@
       ENDIF
 !
 !       find all intersections between boundary segments and this line,
-!       limit dislocation motion accordingly
-!
+      !!       limit dislocation motion accordingly
+      
+      !! xint is the location of the intersection point
+                                !
+      XYRANGE(1,1:2) = -1.0D30
+      XYRANGE(2,1:2) = 1.0D30
+      do ism = 1, Nsegm
+         bot = (a1*ABSegm(2,ism)-ABSegm(1,ism)*a2)
+         if (abs(bot) > tol) then
+            xint(1) = (ABSegm(3,ism)*a2-ABSegm(2,ism)*a3)/bot
+            xint(2) = (-ABSegm(3,ism)*a1+ABSegm(1,ism)*a3)/bot
+!       found an intersection:
+            IF ( BETWEEN(X0(1,ISEgm(1,ism)),X0(1,ISEgm(2,ism)),xint) )  THEN
+               do indx = 1, 2
+                  !! if x, y of dislocation is
+                  if (R(indx) < xint(indx)) then
+                     xyrange(2,indx) = min(xint(indx), xyrange(2,indx))
+                  else
+                     xyrange(1,indx) = max(xint(indx), xyrange(1,indx))
+                  end if
+               end do
+
+            END IF
+         end if
+      end do
+      
       Range(1) = -1.E30
       Range(2) = 1.E30
       DO ism = 1 , NSEgm
@@ -496,8 +521,7 @@
 !
 !       found an intersection:
 !
-            IF ( BETWEEN(X0(1,ISEgm(1,ism)),X0(1,ISEgm(2,ism)),xint) )&
-     &           THEN
+            IF ( BETWEEN(X0(1,ISEgm(1,ism)),X0(1,ISEgm(2,ism)),xint) )  THEN
                IF ( R(Index)<xint(Index) ) THEN
                   Range(2) = MIN(xint(Index),Range(2))
                ELSE
@@ -525,6 +549,9 @@
       ELSE
          WRITE (*,*) 'Y-range for the dislocation' , Range(1) , Range(2)
       ENDIF
+
+      write(*,'(A,2(1X,2E15.6))') 'X-Y range for dislocation = ', xyrange(1,1:2), xyrange(2,1:2)
+      
       END SUBROUTINE SLIPRANGE
  
 !
