@@ -452,11 +452,14 @@
       IMPLICIT NONE
 !*--SLIPRANGE460
       DOUBLE PRECISION B(3) , R(2) , Range(2) , xint(2) , RANGETOL
+      DOUBLE PRECISION :: line(3)
       DOUBLE PRECISION :: XYRANGE(2,2)
+      
       PARAMETER (RANGETOL=0.5)
       INTEGER Index , i, indx
       LOGICAL BETWEEN
       DOUBLE PRECISION a1 , a2 , a3 , bot , TOL
+      
       PARAMETER (TOL=1.E-6)
       INTEGER ism
 !
@@ -475,6 +478,9 @@
          a2 = -B(1)/(B(1)*R(2)-B(2)*R(1))
          a3 = 1.D0
       ENDIF
+      line(1) = a1; 
+      line(2) = a2;
+      line(3) = a3;
 !
 !       depending on orientation of b, use x or y for comparisons
 !
@@ -550,6 +556,16 @@
          WRITE (*,*) 'Y-range for the dislocation' , Range(1) , Range(2)
       ENDIF
 
+      do indx = 1,2
+	do i = 1, 2
+	    if (xyrange(i,indx) < 0.0d0) then 
+		xyrange(i,indx) = xyrange(i,indx) - rangetol - 5.0d0
+	    else
+		xyrange(i,indx) = xyrange(i,indx) + rangetol + 5.0d0
+	    end if
+	end do
+      end do
+      
       write(*,'(A,2(1X,2E15.6))') 'X-Y range for dislocation = ', xyrange(1,1:2), xyrange(2,1:2)
       
       END SUBROUTINE SLIPRANGE
