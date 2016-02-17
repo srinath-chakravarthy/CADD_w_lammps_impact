@@ -218,6 +218,7 @@
       USE MOD_PARALLEL
       IMPLICIT NONE
 !*--SLIPCHECK214
+      LOGICAL :: image_flag
       LOGICAL Newmesh , Addedslip
       INTEGER Numnp , Ndf , Numel , Nen1 , Nxdm , i , n1 , n2 , n3
       DOUBLE PRECISION X(Nxdm,Numnp) , B(Ndf,Numnp) , det , Plottime
@@ -747,7 +748,7 @@
                      ELSE
                         ifactor = 1
                      ENDIF
-                     xd(1:2)=xd(1:2)+30.0d0*ifactor*bvec(1:2)
+                     xd(1:2)=xd(1:2)+15.0d0*ifactor*bvec(1:2)
                      !! Try to place the dilsocation 
 
 !!$                     CALL FINDSLIPPLANE(bvec,x0,ifactor,islp,theta_s,&
@@ -765,11 +766,15 @@
                      WRITE (*,'(A,3F15.6)') 'with b=' , bvec(1:3)
                      WRITE (*,'(A,F15.6)', advance = 'no') ' and theta_e=' , theta_e
                      WRITE (*,'(A,F15.6)') ' and theta_s=' , theta_s
- 
+		     image_flag = .false.
                      CALL DISL_PASS(x0,xd,bvec(1:3),theta_e,theta_s,X,B,Isrelaxed,Numnp,.TRUE.,.TRUE.)
+                     !! --- Number of dislocation passed into atomistics
                      itheta=mod(itheta+1,2)
                      theta_e=itheta*PI
-                     call disl_pass(xi,xi,-bvec(1:3),theta_e,theta_s,X,B,IsRelaxed,numnp,.true.,.true.)
+                     image_flag = .true. 
+                     call disl_pass(xi,xi,-bvec(1:3),theta_e,theta_s,X,B,IsRelaxed,numnp,.true.,.true., image_flag)
+                     image_flag = .false. 
+                     
                      CALL DISL_PRINT(0)
 99001                FORMAT (5E15.6)
                      Dislpass = .TRUE.

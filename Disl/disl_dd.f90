@@ -28,11 +28,12 @@
 !*==disl_accept.spg  processed by SPAG 6.70Rc at 12:39 on 29 Oct 2015
  
  
-      SUBROUTINE DISL_ACCEPT(R0,Bv,Th_e,Th_s)
+      SUBROUTINE DISL_ACCEPT(R0,Bv,Th_e,Th_s,image_flag)
       USE MOD_DISL_PARAMETERS
       IMPLICIT NONE
 !*--DISL_ACCEPT33
       DOUBLE PRECISION R0(3) , Bv(3) , Th_e , Th_s , rr , RTOL
+      LOGICAL :: image_flag
       PARAMETER (RTOL=1.D0)
       INTEGER ishift
       LOGICAL moved
@@ -128,7 +129,7 @@
  
  
  
-      SUBROUTINE DISL_PASS(R0,Rd,Burg,Th_e,Th_s,X,B,Is_relaxed,Numnp, Subtract,Store)
+      SUBROUTINE DISL_PASS(R0,Rd,Burg,Th_e,Th_s,X,B,Is_relaxed,Numnp, Subtract,Store, image_flag)
  
 !
 !     given location x and xd and the burg/theta of a dislocation,
@@ -139,10 +140,11 @@
 !      USE MOD_DD_SLIP
       IMPLICIT NONE
 !*--DISL_PASS141
+      INTEGER :: disl_num !> @ number of dislocation accepted
       DOUBLE PRECISION R0(3) , Rd(3) , Burg(3) , B(3,*) , X(3,*)
       DOUBLE PRECISION Th_e , Th_s
       INTEGER Is_relaxed(numnp) , Numnp
-      LOGICAL Subtract , Store , nucl
+      LOGICAL Subtract , Store , nucl, image_flag
 !
       DOUBLE PRECISION u(3) , ud(3)
       INTEGER i , j
@@ -154,7 +156,9 @@
 !!$      PRINT * , 'Image Locations'
 !!$      PRINT * , 'Subtract =' , R0(1:2)
 !!$      PRINT * , 'Image = ' , Rd(1:2)
-      if (store) call disl_accept(rd, burg, th_e, th_s)
+	if (store) then 
+	    call disl_accept(rd, burg, th_e, th_s, disl_num, image_flag)
+	end if
 !!$      IF ( Store ) THEN
 !!$         IF ( nucl ) THEN
 !!$            CALL NUCLEATE_ATOMISTIC_DISL(Islp,S_dis,Th_e,Th_s,Burg)

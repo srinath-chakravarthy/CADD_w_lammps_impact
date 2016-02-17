@@ -201,7 +201,7 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
       DOUBLE PRECISION ddis
       double precision :: ev_convert1
       CHARACTER*80 error_message
-      double precision :: dist_dis
+      double precision :: Rold(2), dist_dis
       integer :: rmdisl(MAX_DISL)
 
 !
@@ -226,6 +226,7 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
  
       DO i = 1 , NDIsl
          IF ( ELEm_disl(i) > 0 ) THEN
+	    rold = R_disl(1:2,i)
             PK_f(i) = (PK_force(1,i)*BURgers(1,i)+PK_force(2,i)&
      &                *BURgers(2,i))/BURg_length(i)
 !            write(*,*) i,' non sf disl force = ',pk_f(i)
@@ -242,6 +243,15 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
      &                       /BURg_length(i)
                R_Disl(2,i) = R_Disl(2,i) + mobility*PK_f(i)*BURgers(2,i)&
      &                       /BURg_length(i)
+	       !! Hack to prevent dislocations from moving back for the impact problem
+	       ! --- Dislocation y is either the same or moving back 
+	       ! --- Absolute y coord of dislocation 
+	       if (abs(R_disl(2,i)) - abs(rold(2)) < 1.d-6) then 
+		if (abs(R_disl(1,i)) - abs(rold(1)) < 1.d-6) then 
+		    write(*,'(A)') 'Preventing Dislocation ', i, ' from moving back'
+		    R_disl(1:2,i) = rold
+		end if 
+	       end if
             ENDIF
 !            endif
             WRITE (*,*) 'new disl pos = ' , i, R_Disl(1,i) , R_Disl(2,i)
@@ -271,8 +281,8 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
 			    if (abs(BURgers(1,i)+ BURgers(1,j)) < 1.d-6 .and. abs(BURgers(2,i)+ BURgers(2,j)) < 1.d-6) then 
 				write(*,'(A,I5,A,I5,A)') ' removing dislocations ', i, ' and ', j, ' and their images'
 				!!! need to call remove dislocations
-				rmdisl()
-			    else if (dist_dis < burg_length) then 
+				!!!rmdisl()
+			    else if (dist_dis < burg_length(j)) then 
 				write(*,'(A,I5,A,2F15.6)',advance='no') 'moving dislocation ', j, ' from ', R_disl(1:2,j), ' to '
 				deltas = 2.d0*burg_length(j)
 				!! Move the jth dislocation in the direction of the burgers vector
