@@ -772,7 +772,7 @@
                      itheta=mod(itheta+1,2)
                      theta_e=itheta*PI
                      image_flag = .true. 
-                     call disl_pass(xi,xi,-bvec(1:3),theta_e,theta_s,X,B,IsRelaxed,numnp,.true.,.true., image_flag)
+                     call disl_pass(xi,xi,-bvec(1:3),theta_e,theta_s,X,B,IsRelaxed,numnp,.true.,.true.)
                      image_flag = .false. 
                      
                      CALL DISL_PRINT(0)

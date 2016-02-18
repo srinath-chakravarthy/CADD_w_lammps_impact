@@ -202,7 +202,7 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
       double precision :: ev_convert1
       CHARACTER*80 error_message
       double precision :: Rold(2), dist_dis
-      integer :: rmdisl(MAX_DISL)
+      integer :: rmdisl(MAX_DISL), irm
 
 !
 !!!!    hacked parameters
@@ -235,7 +235,7 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
 !!!!        upper limit on velocities
             IF ( ABS(PK_f(i)*mobility)>max_vel ) PK_f(i)&
      &           = max_vel/mobility*PK_f(i)/ABS(PK_f(i))
-            write(*,*) 'old disl pos = ',i, r_disl(1, i), r_disl(2, i)
+            write(*,'(A,I5,2F15.6,1X,2F15.6)') 'old disl pos = ',i, r_disl(1, i), r_disl(2, i), burgers(1:2,i)
 !            write(*,*) i,' total disl force = ',pk_f(i)
 !            if(r_disl(2,i).gt.-100.0.or.pk_f(i).gt.0.0) then
             IF ( R_Disl(2,i)<=min_pos .OR. PK_f(i)<0.0 ) THEN
@@ -248,13 +248,13 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
 	       ! --- Absolute y coord of dislocation 
 	       if (abs(R_disl(2,i)) - abs(rold(2)) < 1.d-6) then 
 		if (abs(R_disl(1,i)) - abs(rold(1)) < 1.d-6) then 
-		    write(*,'(A)') 'Preventing Dislocation ', i, ' from moving back'
-		    R_disl(1:2,i) = rold
+		    write(*,'(A,I5,A)') 'Preventing Dislocation ', i, ' from moving back'
+		    R_disl(1:2,i) = rold + 2.0d0*BURgers(1:2,i)/Burg_length(i)
 		end if 
 	       end if
             ENDIF
 !            endif
-            WRITE (*,*) 'new disl pos = ' , i, R_Disl(1,i) , R_Disl(2,i)
+            WRITE (*,'(A,I5,2F15.6,1X,2F15.6)') 'new disl pos = ' , i, R_Disl(1,i) , R_Disl(2,i), burgers(1:2,i)
             write(*,*) ' '
             elem_old = ELEm_disl(i)
             ELEm_disl(i) = FE_LOCATE(R_Disl(1,i),ELEm_disl(i))
@@ -268,9 +268,11 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
          ENDIF
       ENDDO
 !!$ Checking for dislocation collisions and annihilations
+  irm = 0
+  rmdisl = 0
       Do i = 1, ndisl
 	if (elem_disl(i) > 0) then 
-	    do j = 1, ndisl
+	    do j = i+1, ndisl
 		if (elem_disl(j) > 0) then 
 		    if (i/= j ) then 
                     !! Calculate distance between 2 dislocations
@@ -278,10 +280,13 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
 			if (dist_dis < 4.d0*burg_length(j)) then
 			    write(*,'(A,I5,A,I5,A,I5,A,2F15.6,A)', advance = 'no') &
 			    'Dislocations ', i, ' and ', j, ' are collinding' 
-			    if (abs(BURgers(1,i)+ BURgers(1,j)) < 1.d-6 .and. abs(BURgers(2,i)+ BURgers(2,j)) < 1.d-6) then 
+			    if (BURgers(1,i)*BURgers(1,j) < 0.0d0 .and. BURgers(2,i)*BURgers(2,j) < 0.0d0) then 
 				write(*,'(A,I5,A,I5,A)') ' removing dislocations ', i, ' and ', j, ' and their images'
 				!!! need to call remove dislocations
-				!!!rmdisl()
+				irm = irm + 1
+				rmdisl(irm) = i
+				irm = irm + 1
+				rmdisl(irm) = j
 			    else if (dist_dis < burg_length(j)) then 
 				write(*,'(A,I5,A,2F15.6)',advance='no') 'moving dislocation ', j, ' from ', R_disl(1:2,j), ' to '
 				deltas = 2.d0*burg_length(j)
@@ -298,7 +303,12 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
 	    end do
 	end if
       end do
-      
+
+      do i = 1, irm
+	call disl_remove(rmdisl(i))
+      end do
+!!$ > @TODO remove image dislocations       
+
 !!!!    !!hacked parameters
 !!$      min_pos = -10.0
 !!$      time_step_con = 1000.0d0 !> Time in femtoseconds

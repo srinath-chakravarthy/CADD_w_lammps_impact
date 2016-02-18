@@ -63,7 +63,7 @@ SUBROUTINE DUMPDISL_VTK1(Scale,Logic,Umag,B,Ndf)
   DOUBLE PRECISION :: sd , xd(4,3)
   INTEGER , DIMENSION(:,:,:) , ALLOCATABLE :: lines
   DOUBLE PRECISION :: cosi , sini , ds , ds2 , bsign
-  ds = 10.0D0
+  ds = 5.0D0
   ds2 = ds/2.D0
 
 

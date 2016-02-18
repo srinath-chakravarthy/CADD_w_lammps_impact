@@ -27,8 +27,30 @@
       END SUBROUTINE DISL_SETUP
 !*==disl_accept.spg  processed by SPAG 6.70Rc at 12:39 on 29 Oct 2015
  
+      SUBROUTINE DISL_REMOVE(idisl)
+      USE MOD_DISL_PARAMETERS
+      IMPLICIT NONE
+      integer :: idisl, j
+      !!> Shift all arrays using idisl position 
+      !!> Arays to update are burgers, burg_length, theta_e, theta_s
+      !!>   r_disl, pk_stress, pk_force, disl_range, r_old, disl_residence
+     do j = idisl + 1, ndisl
+	burgers(1:2,j-1) = burgers(1:2, j)
+	BURg_length(j-1) = burg_length(j)
+	theta_e(j-1) = theta_e(j)
+	theta_s(j-1) = theta_s(j)
+	r_disl(:,j-1) = r_disl(:,j)
+	pk_stress(:,j-1) = pk_stress(:,j)
+	pk_force(:,j-1) = pk_force(:,j)
+	disl_range(:,j-1) = disl_range(:,j)
+	r_old(:,j-1) = r_old(:,j)
+	disl_residence(:,:,j-1) = disl_residence(:,:,j)
+     end do
+     ndisl = ndisl -1
+!
+      END SUBROUTINE DISL_REMOVE
  
-      SUBROUTINE DISL_ACCEPT(R0,Bv,Th_e,Th_s,image_flag)
+      SUBROUTINE DISL_ACCEPT(R0,Bv,Th_e,Th_s)
       USE MOD_DISL_PARAMETERS
       IMPLICIT NONE
 !*--DISL_ACCEPT33
@@ -129,7 +151,7 @@
  
  
  
-      SUBROUTINE DISL_PASS(R0,Rd,Burg,Th_e,Th_s,X,B,Is_relaxed,Numnp, Subtract,Store, image_flag)
+      SUBROUTINE DISL_PASS(R0,Rd,Burg,Th_e,Th_s,X,B,Is_relaxed,Numnp, Subtract,Store)
  
 !
 !     given location x and xd and the burg/theta of a dislocation,
