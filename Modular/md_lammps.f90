@@ -271,8 +271,8 @@
          call add_fix_lammps(lmp, particle_velocity)
          
          SIMstep = 0
-         ALLOCATE (AVEvirst(3,3,NUMnp))
-         ALLOCATE (virst(3,3,NUMnp))
+!          ALLOCATE (AVEvirst(3,3,NUMnp))
+!          ALLOCATE (virst(3,3,NUMnp))
          avedispl = 0.0d0
          ! ---- Initialize FEM
          if (nnsteps == 0) then 

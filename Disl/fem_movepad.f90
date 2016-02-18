@@ -239,17 +239,15 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
 !            write(*,*) i,' total disl force = ',pk_f(i)
 !            if(r_disl(2,i).gt.-100.0.or.pk_f(i).gt.0.0) then
             IF ( R_Disl(2,i)<=min_pos .OR. PK_f(i)<0.0 ) THEN
-               R_Disl(1,i) = R_Disl(1,i) + mobility*PK_f(i)*BURgers(1,i)&
-     &                       /BURg_length(i)
-               R_Disl(2,i) = R_Disl(2,i) + mobility*PK_f(i)*BURgers(2,i)&
-     &                       /BURg_length(i)
+               R_Disl(1,i) = R_Disl(1,i) + mobility*PK_f(i)*BURgers(1,i)/BURg_length(i)
+               R_Disl(2,i) = R_Disl(2,i) + mobility*PK_f(i)*BURgers(2,i)/BURg_length(i)
 	       !! Hack to prevent dislocations from moving back for the impact problem
 	       ! --- Dislocation y is either the same or moving back 
 	       ! --- Absolute y coord of dislocation 
 	       if (abs(R_disl(2,i)) - abs(rold(2)) < 1.d-6) then 
 		if (abs(R_disl(1,i)) - abs(rold(1)) < 1.d-6) then 
 		    write(*,'(A,I5,A)') 'Preventing Dislocation ', i, ' from moving back'
-		    R_disl(1:2,i) = rold + 2.0d0*BURgers(1:2,i)/Burg_length(i)
+		    R_disl(1:2,i) = rold + 0.1d0*sign(1.0d0, PK_f(i))*BURgers(1:2,i)/Burg_length(i)
 		end if 
 	       end if
             ENDIF
@@ -278,15 +276,14 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
                     !! Calculate distance between 2 dislocations
 			dist_dis = sqrt((R_disl(1,i) - R_disl(1,j))**2 + (R_disl(2,i) - R_disl(2,j))**2)
 			if (dist_dis < 4.d0*burg_length(j)) then
-			    write(*,'(A,I5,A,I5,A,I5,A,2F15.6,A)', advance = 'no') &
-			    'Dislocations ', i, ' and ', j, ' are collinding' 
+			    write(*,'(A,I5,A,I5,A,I5,A,2F15.6,A)') 'Dislocations ', i, ' and ', j, ' are collinding' 
 			    if (BURgers(1,i)*BURgers(1,j) < 0.0d0 .and. BURgers(2,i)*BURgers(2,j) < 0.0d0) then 
-				write(*,'(A,I5,A,I5,A)') ' removing dislocations ', i, ' and ', j, ' and their images'
+				write(*,'(A,I5,A,I5)') ' removing dislocations ', i
 				!!! need to call remove dislocations
 				irm = irm + 1
-				rmdisl(irm) = i
+				rmdisl(i) = 1
 				irm = irm + 1
-				rmdisl(irm) = j
+				rmdisl(j) = 1
 			    else if (dist_dis < burg_length(j)) then 
 				write(*,'(A,I5,A,2F15.6)',advance='no') 'moving dislocation ', j, ' from ', R_disl(1:2,j), ' to '
 				deltas = 2.d0*burg_length(j)
@@ -304,8 +301,10 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
 	end if
       end do
 
-      do i = 1, irm
-	call disl_remove(rmdisl(i))
+      do i = 1, max_disl
+	if (rmdisl(i) > 0) then 
+	    call disl_remove(i)
+	end if
       end do
 !!$ > @TODO remove image dislocations       
 

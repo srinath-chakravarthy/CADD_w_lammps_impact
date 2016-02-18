@@ -824,6 +824,9 @@
       MOVemesh = .FALSE.
       MOVed = .FALSE.
       call initialize_lammps(Id,X,Ix,F,B,Itx,lmp)
+      ALLOCATE (AVEvirst(3,3,NUMnp))
+      ALLOCATE (virst(3,3,NUMnp))
+
       return
       
       END SUBROUTINE MP01

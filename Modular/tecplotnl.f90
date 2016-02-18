@@ -905,7 +905,7 @@
       ev_convert = 1.602176462
 !     Converts from ev/A^3 to MPa
       fact = 1.D0/(ev_convert)/1.D-5
-      atom_vol = Material(1)%A0**3/4.d0
+      atom_vol = (Material(1)%A0**3.0)/4.d0
       fact2 = fact/atom_vol
  
 !
@@ -1130,7 +1130,7 @@
             IF ( Key=='stra' ) WRITE (Logic,'(6(1x,e15.6))')&
      &                                nstrain(1,1,i) , nstrain(2,2,i) , &
      &                                nstrain(1,2,i)
-            virist(:,:) = AVEvirst(:,:,i)*fact2
+            virist(:,:) = AVEvirst(:,:,i)
             nstr1(:,:) = nstrain(:,:,i)*fact
             IF ( Key=='viri' ) THEN
                IF ( ISRelaxed(i)==1 .OR. ISRelaxed(i)==2 ) THEN
