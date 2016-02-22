@@ -65,7 +65,7 @@
       INTEGER Ix(NEN1,NUMel)
       DOUBLE PRECISION X(NXDm,NUMnp) , s(3)
       CHARACTER*80 filename
-      INTEGER i , j , k , icheck , icheck2 , logic
+      INTEGER i , j , k , icheck , icheck2 , logic, ii
       LOGICAL first , Silent , intri , ontri
  
       IF ( ALLOCATED(ISRelaxed) ) DEALLOCATE (ISRelaxed)
@@ -125,9 +125,10 @@
          ENDIF
       ENDDO
       WRITE (*,*) 'Number of nodes in the atomistic region:' , NQC
-      WRITE (*,*) 'Number of nodes in the elastic region:' , &
-     &            NUMnp - NQC - NSPring
+      WRITE (*,*) 'Number of nodes in the elastic region:' ,  NUMnp - NQC - NSPring
       WRITE (*,*) 'Number of nodes on the interface:' , NSPring
+      
+        
       IF ( NEN1/=4 ) STOP 'ERROR: nen must be 3!'
       filename = 'out/check.plt'
       OPEN (UNIT=123,FILE=filename,STATUS='unknown')

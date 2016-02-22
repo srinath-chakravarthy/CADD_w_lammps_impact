@@ -76,286 +76,245 @@
 
 
 
-      SUBROUTINE DOSTEPS_lammps(N,Atomdispl,Atomforce,Db,Fl,Epps,Iprint,Dsmax,&
-     &                   Rseed,Dfn,Atomid,Atomcoord,Ix,F,Itx,Checkslip,&
-     &                   Addedslip,Lostslip,Movedisl,Moveatoms, lmp)
+    SUBROUTINE DOSTEPS_lammps(N,Atomdispl,Atomforce,Db,Fl,Epps,Iprint,Dsmax,&
+         &                   Rseed,Dfn,Atomid,Atomcoord,Ix,F,Itx,Checkslip,&
+         &                   Addedslip,Lostslip,Movedisl,Moveatoms, lmp)
 
-      USE MOD_GLOBAL
-      USE MOD_POTEN
-      USE MOD_DYNAMO
-      USE MOD_OUTPUT
-      USE MOD_MATERIAL
-      USE MOD_PARALLEL
-      USE MOD_TIMMING
-      USE MOD_COMMON
-      USE MOD_FILE
-      USE MOD_DISL_PARAMETERS
+          USE MOD_GLOBAL
+          USE MOD_POTEN
+          USE MOD_DYNAMO
+          USE MOD_OUTPUT
+          USE MOD_MATERIAL
+          USE MOD_PARALLEL
+          USE MOD_TIMMING
+          USE MOD_COMMON
+          USE MOD_FILE
+          USE MOD_DISL_PARAMETERS
 
-      USE LAMMPS
-      USE MOD_LAMMPS
-      IMPLICIT NONE
-!*--DOSTEPS1325
-      INTEGER MAXATOMS
-      PARAMETER (MAXATOMS=1000000)
-!
-      INTEGER N , Ix(nen1, *) , Atomid(NDF,*) , Iprint , Itx(*) , Rseed , &
-     &        numdis , numh
-      DOUBLE PRECISION Atomdispl(NDF,NUMnp) , Db(N) , Atomforce(3,*) , &
-     &                 Fl , Epps , Dsmax , Dfn , Atomcoord(NDF,*) , &
-     &                 F(*) , mass
-      LOGICAL convonfn , Addedslip , Checkslip , Movedisl , Lostslip , &
-     &        Moveatoms , DISLCHECK
-      LOGICAL dislpass
-      LOGICAL printing , DEBug , plot , fullfield , solvefem , &
-     &        restartaveraging
-      COMMON /DEBUGGER/ DEBug
-      COMMON /MD    / OLDacceleration , OLDvelocity , ACCeleration , &
-     &                VELocity , AVEdispl , RAMplevel , NUMmdatoms
-      ! Lammps variables
-      type(c_ptr) :: lmp
+          USE LAMMPS
+          USE MOD_LAMMPS
+          IMPLICIT NONE
 
-!
-!--	Local variables
-      INTEGER isdamped(MAXATOMS)
-      INTEGER nsteps , i , iatom , j , rc , intatom1 , intatom2 , &
-     &        intatom3 , intatom4
-      INTEGER ii , jj
-      INTEGER NUMmdatoms , femsteps , ndis_checked
-      INTEGER mdsteps , nnsteps , maxmdsteps
-      INTEGER femstepmin , femsteprange , femstepcounter , istep , &
-     &        readneighbors
-!--	Indexes for H atoms, using the fact that they are adjacent
-      INTEGER :: hindex_init = 0 , hindex_final = -1 , indexmin , &
-     &           indexmax
-      INTEGER :: numinterstitial = 0
+          INTEGER MAXATOMS
+          PARAMETER (MAXATOMS=1000000)
 
-      DOUBLE PRECISION atommass , damped_width , langevincoeff , &
-     &                 lcnhdampcoeff , requiredtemp , currenttemp , &
-     &                 picosecond , systemenergy , timestep , &
-     &                 tinterior , stadiumtemp , atomtemp
-!
-      DOUBLE PRECISION OLDacceleration(3,MAXATOMS) , &
-     &                 OLDvelocity(3,MAXATOMS) , &
-     &                 ACCeleration(3,MAXATOMS) , VELocity(3,MAXATOMS) ,&
-     &                 AVEdispl(3,MAXATOMS) , RAMplevel(MAXATOMS)
-
-      DOUBLE PRECISION xmin , xmax , ymin , ymax , plottime
-      CHARACTER*80 atomfilename , energyfilename , tempfilename , &
-     &             neighborfilename
-
-      LOGICAL newmd , finishmd
-
-        !!! JS comment For output Avgstress !!!
-      DOUBLE PRECISION tempavgstress(3,3)
-      INTEGER ifem
-
-      CHARACTER*80 filename
-      INTEGER logic , nstepsorig , npass
-      DOUBLE PRECISION :: dtol
-!
-      TYPE (REGION) simulationcell
-      TYPE (MD_THERMOSTAT) thermostat
-!
-
-!--	Functions
-      INTEGER GETSYSTEMSIZE , FINDMDATOMS
-      DOUBLE PRECISION GETTEMPERATURE , random , ZBQLU01 , GETRAMP , straine0
-
-      ! ---- Lammps related local variables
-      integer :: total_lammps_steps, fem_call_back_steps, lammps_loop, jstep
-      character(1024) :: command_line
-      logical :: update_pad, update_all
-
-      DATA mdsteps/0/
-      DATA nnsteps/0/
-      DATA intatom1/0/
-      DATA intatom2/0/
-      DATA intatom3/0/
-      DATA intatom4/0/
-      DATA femstepcounter/0/
-      DATA ndis_checked/0/
-
-      npass = 0
-
-      IF ( MAXATOMS<NUMnp ) THEN
-         PRINT * , 'increase size of maxAtoms in md.f'
-         STOP
-      ENDIF
-!
-      plot = .FALSE.
-      restartaveraging = .FALSE.
-!
-      CALL LOSTSLIPINIT(Lostslip)
-!
-      picosecond = 1.0D-12      ! s
-      atommass = AMAss(1)*picosecond**2         ! eV s^2/A^2
-      timestep = 1.0D-15                        ! seconds
-      femsteps = 1
-      fullfield = .TRUE.
-      femstepmin = 5
-      femsteprange = 0
-!
-      dtol = 1.D-3
-
-      PRINT * , 'Entering dosteps'
-!
-!!$!	Read Data
-!!$!C--Jun Song NumMDRescale is # of MD steps
-!!$!C--doing temperature rescaling
-!!$!C--Reading neighborlist update parameter
-!!$      OPEN (UNIT=200,FILE='md.inp',STATUS='old')
-!!$      READ (200,*) damped_width, exclude_top, exclude_bot, exclude_left, exclude_right
-!!$      READ (200,*) langevincoeff , LVScaleratio
-!!$      READ (200,*) lcnhdampcoeff
-!!$      READ (200,*) requiredtemp
-!!$      READ (200,*) TIMestep1
-!!$      READ (200,*) INDextimeh
-!!$      READ (200,*) femstepmin
-!!$      READ (200,*) nsteps
-!!$      READ (200,*) thermostat%TYPE
-!!$      READ (200,*) thermostat%DAMPING_MODE
-!!$      READ (200,*) NUMmdrescale
-!!$      READ (200,*) TWIndow
-!!$      READ (200,*) NHRescale , MAXhtemp , HNVeflag
-!!$      READ (200,*) maxmdsteps
-!!$      CLOSE (200)
-
-      !! Currently using old variables for compatibilty
-      ! ---- Lammps is run for fem_call_back_steps for a total of total_lammps_steps
-                                ! ---- so that the main loop is only for lammps_loop
-                                
-                                
-!       write(*,'(A)') 'Lammps md paramters'
-!       write(*,'(A, F15.6, 4(1X,I1))') 'Stadium parameter = ', stadium_width, exclude_top, exclude_bot, exclude_left, exclude_right
-!       write(*,'(A, 2E15.6)') 'Damping Coefficeitn =', damp_coeff, damp_ratio
-!       write(*,'(A, F15.3)') 'Temperature = ', lammps_temperature
-!       write(*,'(A, F15.3)') 'Time Step = ', lammps_timestep/1.e-12
-!       write(*,'(A, 5I7)') 'Steps (Update, mdsteps, output, restart, initial) = ', fem_update_steps,  & 
-! 		num_md_steps, lammps_output_steps, num_restart_steps, num_initial_equil
-!       write(*, '(A, 3F15.3)') 'Particle paramters (velocity, radius, height) = ', &
-! 		particle_velocity, particle_radius, particle_height                                
-       nsteps = num_md_steps
-
-      
-      fem_call_back_steps = fem_update_steps
-      total_lammps_steps = nsteps
-      lammps_loop = total_lammps_steps/fem_call_back_steps
-      if (lammps_loop < 1) then
-         call lammps_close(lmp)
-         call error_handler("lammps loop cannot be less than 1 closing lammps and quitting")
-      end if
+          INTEGER N , Ix(nen1, *) , Atomid(NDF,*) , Iprint , Itx(*) , Rseed ,  numdis , numh
+          DOUBLE PRECISION Atomdispl(NDF,NUMnp) , Db(N) , Atomforce(3,*) , &
+               &                 Fl , Epps , Dsmax , Dfn , Atomcoord(NDF,*) , &
+               &                 F(*) , mass
+          LOGICAL convonfn , Addedslip , Checkslip , Movedisl , Lostslip ,  Moveatoms , DISLCHECK
+          LOGICAL dislpass
+          LOGICAL printing , DEBug , plot , fullfield , solvefem , restartaveraging
+          COMMON /DEBUGGER/ DEBug
+          COMMON /MD    / OLDacceleration , OLDvelocity , ACCeleration , VELocity , AVEdispl , RAMplevel , NUMmdatoms
+!!$      ! Lammps variables
+          type(c_ptr) :: lmp
 
 
-      finishmd = .FALSE.
-      newmd = .FALSE.
-      timestep = lammps_timestep
+!!$--	Local variables
+          INTEGER isdamped(MAXATOMS)
+          INTEGER nsteps , i , iatom , j , rc , intatom1 , intatom2 , &
+               &        intatom3 , intatom4
+          INTEGER ii , jj
+          INTEGER NUMmdatoms , femsteps , ndis_checked
+          INTEGER mdsteps , nnsteps , maxmdsteps
+          INTEGER femstepmin , femsteprange , femstepcounter , istep , &
+               &        readneighbors
+!!$--	Indexes for H atoms, using the fact that they are adjacent
+          INTEGER :: hindex_init = 0 , hindex_final = -1 , indexmin , &
+               &           indexmax
+          INTEGER :: numinterstitial = 0
 
-      SYStemp = lammps_temperature
-      PRINT * , 'MDSteps: ' , mdsteps
-      IF ( mdsteps==0 ) newmd = .TRUE.
-!c	if (MDSteps .eq. MAXMDSteps) finishMD = .true.
+          DOUBLE PRECISION atommass , damped_width , langevincoeff , &
+               &                 lcnhdampcoeff , requiredtemp , currenttemp , &
+               &                 picosecond , systemenergy , timestep , &
+               &                 tinterior , stadiumtemp , atomtemp
 
-      IF ( finishmd ) GOTO 99999
+          DOUBLE PRECISION OLDacceleration(3,MAXATOMS) , &
+               &                 OLDvelocity(3,MAXATOMS) , &
+               &                 ACCeleration(3,MAXATOMS) , VELocity(3,MAXATOMS) ,&
+               &                 AVEdispl(3,MAXATOMS) , RAMplevel(MAXATOMS)
+
+          DOUBLE PRECISION xmin , xmax , ymin , ymax , plottime
+          CHARACTER*80 atomfilename , energyfilename , tempfilename , neighborfilename
+
+          LOGICAL newmd , finishmd
+
+!!$        !!! JS comment For output Avgstress !!!
+          DOUBLE PRECISION tempavgstress(3,3)
+          INTEGER ifem
+
+          CHARACTER*80 filename
+          INTEGER logic , nstepsorig , npass
+          DOUBLE PRECISION :: dtol
+
+          TYPE (REGION) simulationcell
+          TYPE (MD_THERMOSTAT) thermostat
+
+!!$--	Functions
+          INTEGER GETSYSTEMSIZE , FINDMDATOMS
+          DOUBLE PRECISION GETTEMPERATURE , random , ZBQLU01 , GETRAMP , straine0
+
+!!$      ! ---- Lammps related local variables
+          integer :: total_lammps_steps, fem_call_back_steps, lammps_loop, jstep
+          character(1024) :: command_line
+          logical :: update_pad, update_all
+
+          DATA mdsteps/0/
+          DATA nnsteps/0/
+          DATA intatom1/0/
+          DATA intatom2/0/
+          DATA intatom3/0/
+          DATA intatom4/0/
+          DATA femstepcounter/0/
+          DATA ndis_checked/0/
+
+          npass = 0
+
+          IF ( MAXATOMS<NUMnp ) THEN
+             PRINT * , 'increase size of maxAtoms in md.f'
+             STOP
+          ENDIF
+
+          plot = .FALSE.
+          restartaveraging = .FALSE.
+
+          CALL LOSTSLIPINIT(Lostslip)
+
+          picosecond = 1.0D-12      ! s
+          atommass = AMAss(1)*picosecond**2         ! eV s^2/A^2
+          timestep = 1.0D-15                        ! seconds
+          femsteps = 1
+          fullfield = .TRUE.
+          femstepmin = 5
+          femsteprange = 0
+
+          dtol = 1.D-3
+
+          PRINT * , 'Entering dosteps'                               
+
+
+          nsteps = num_md_steps
+
+
+          fem_call_back_steps = fem_update_steps
+          total_lammps_steps = nsteps
+          lammps_loop = total_lammps_steps/fem_call_back_steps
+          if (lammps_loop < 1) then
+             call lammps_close(lmp)
+             call error_handler("lammps loop cannot be less than 1 closing lammps and quitting")
+          end if
+
+
+          finishmd = .FALSE.
+          newmd = .FALSE.
+          timestep = lammps_timestep
+
+          SYStemp = lammps_temperature
+          PRINT * , 'MDSteps: ' , mdsteps
+          IF ( mdsteps==0 ) newmd = .TRUE.
+!!$c	if (MDSteps .eq. MAXMDSteps) finishMD = .true.
+
+          IF ( finishmd ) GOTO 99999
                                 ! Finish MD simulation
 
-!C--Here comes inilization if newMD
-      IF ( newmd ) THEN
-      
-!        Equilibrate initialized temperatures...
-!        Needed separately since otherwise the mapping
-!        gets mess up
-         call equilibrate_lammps(lmp, num_initial_equil)
-      
-!        Added here in order give a particle an impact
-!        velocity after it's temperature has been equilibrated
-         call add_fix_lammps(lmp, particle_velocity)
-         
-         SIMstep = 0
-!          ALLOCATE (AVEvirst(3,3,NUMnp))
-!          ALLOCATE (virst(3,3,NUMnp))
-         avedispl = 0.0d0
-         ! ---- Initialize FEM
-         if (nnsteps == 0) then 
-	    AVEdispl(1:NDF,1:NUMnp) = Atomdispl(1:NDF,1:NUMnp)
-            AVEvirst(1:3,1:3,1:NUMnp) = 0.D0
-            virst(1:3,1:3,1:NUMnp) = 0.D0
+!!$C--Here comes inilization if newMD
+          IF ( newmd ) THEN
 
-         end if
-         solveFEM = .true.
-         ifem = 1
-         CALL GETFEM_FORCES(Atomid,Atomcoord,Ix,F,Atomdispl,&
-     &                                AVEdispl,Atomforce,atommass,&
-     &                                systemenergy,Moveatoms,Movedisl,&
-     &                                fullfield,solvefem,straine0,ifem)
+!!$        Equilibrate initialized temperatures...
+!!$        Needed separately since otherwise the mapping
+!!$        gets mess up
 
-!         update_pad = .true.
-         update_all = .false.
-         
-         call update_lammps_coords(AtomCoord, AtomDispl, update_pad, update_all, lmp)
-         newmd = .false.
-         solveFEM = .false.
-         ifem = 0
-         
-      ENDIF
-!     end of if new md loop
-!C--New MD initialization ends
+!!$ ---- Initialize FEM
+             if (nnsteps == 0) then 
+                AVEdispl(1:NDF,1:NUMnp) = Atomdispl(1:NDF,1:NUMnp)
+                AVEvirst(1:3,1:3,1:NUMnp) = 0.D0
+                virst(1:3,1:3,1:NUMnp) = 0.D0
+
+             end if
+
+             call equilibrate_lammps(lmp, num_initial_equil)
+!!$            ! ---- Updates Atom Displacements and forces
+             call update_from_lammps(AtomDispl, AtomCoord, AtomForce,  AveDispl, Velocity, virst, avevirst, lmp)
+
+!!$        Added here in order give a particle an impact
+!!$        velocity after it's temperature has been equilibrated
+             call add_fix_lammps(lmp, particle_velocity)
+
+             SIMstep = 0
+             avedispl = 0.0d0
+
+             solveFEM = .true.
+             ifem = 1
+             CALL GETFEM_FORCES(Atomid,Atomcoord,Ix,F,Atomdispl,&
+                  &                                AVEdispl,Atomforce,atommass,&
+                  &                                systemenergy,Moveatoms,Movedisl,&
+                  &                                fullfield,solvefem,straine0,ifem)
+
+!!$         update_pad = .true.
+             update_all = .false.
+
+             call update_lammps_coords(AtomCoord, AtomDispl, update_pad, update_all, lmp)
+             newmd = .false.
+             solveFEM = .false.
+             ifem = 0
+
+          ENDIF
+                                !     end of if new md loop
+!!$C--New MD initialization ends
 
 
-!	Assign oldVelocity = velocity
-      OLDvelocity(1:NDF,1:NUMnp) = VELocity(1:NDF,1:NUMnp)
-!	Main Loop
-!--	get the min and max of H indexes
-      indexmin = NUMnp
-      indexmax = 1
+!!$	Assign oldVelocity = velocity
+          OLDvelocity(1:NDF,1:NUMnp) = VELocity(1:NDF,1:NUMnp)
+!!$	Main Loop
+!!$--	get the min and max of H indexes
+          indexmin = NUMnp
+          indexmax = 1
 
-      femsteps = femstepmin
-      ifem = 0
-      dislpass = .FALSE.
-      nstepsorig = nsteps
+          femsteps = femstepmin
+          ifem = 0
+          dislpass = .FALSE.
+          nstepsorig = nsteps
 
-      DO istep = 1, lammps_loop
-         ! ----- Run lammps one step at a time
-         ! ---- Here we can choose, but temporarily to maintain structure of current code
-         ! ---- Lammps is basically run one step at a time
-         do jstep = 1, 1
-            if (istep < lammps_loop) then
-               write(command_line, *) "run ", fem_call_back_steps, " pre yes post no"
+          DO istep = 1, lammps_loop
+!!$ ----- Run lammps one step at a time
+!!$ ---- Here we can choose, but temporarily to maintain structure of current code
+!!$ ---- Lammps is basically run one step at a time
+             do jstep = 1, 1
+                if (istep < lammps_loop) then
+                   write(command_line, *) "run ", fem_call_back_steps, " pre yes post no"
 
-            else
-               write(command_line, *) "run ", fem_call_back_steps, " pre yes post yes"
-            end if
-            if (mod(femstepcounter, femsteps) == 0) then
-               ifem = ifem + 1
-               solveFem = .TRUE.
+                else
+                   write(command_line, *) "run ", fem_call_back_steps, " pre yes post yes"
+                end if
+                if (mod(femstepcounter, femsteps) == 0) then
+                   ifem = ifem + 1
+                   solveFem = .TRUE.
 !!$               call update_from_lammps(AtomDispl, AtomCoord, AtomForce,  AveDispl, Velocity, virst, avevirst, lmp)
 
-               CALL GETFEM_FORCES(Atomid,Atomcoord,Ix,F,Atomdispl,&
-     &                                AVEdispl,Atomforce,atommass,&
-     &                                systemenergy,Moveatoms,Movedisl,&
-     &                                fullfield,solvefem,straine0,ifem)
-!               update_pad = .true.
-               update_all = .false. 
-               call update_lammps_coords(AtomCoord, AtomDispl, update_pad, update_all, lmp)
-               call lammps_command(lmp,'run 0 pre yes post no')
+                   CALL GETFEM_FORCES(Atomid,Atomcoord,Ix,F,Atomdispl,&
+                        &                                AVEdispl,Atomforce,atommass,&
+                        &                                systemenergy,Moveatoms,Movedisl,&
+                        &                                fullfield,solvefem,straine0,ifem)
+                   update_all = .false. 
+                   call update_lammps_coords(AtomCoord, AtomDispl, update_pad, update_all, lmp)
+                   call lammps_command(lmp,'run 0 pre yes post no')
 
 
-               restartAveraging = .true.
-               print *, 'ifem = ', ifem
-               solveFem = .false.
-            else
-               solvefem = .false.
-            end if
+                   restartAveraging = .true.
+                   print *, 'ifem = ', ifem
+                   solveFem = .false.
+                else
+                   solvefem = .false.
+                end if
 
-            ! --- Perform Velocity Verlet using LAMMPS
-            call lammps_command(lmp, command_line)
+!!$            ! --- Perform Velocity Verlet using LAMMPS
+                call lammps_command(lmp, command_line)
 
-            ! ---- Updates Atom Displacements and forces
-            call update_from_lammps(AtomDispl, AtomCoord, AtomForce,  AveDispl, Velocity, virst, avevirst, lmp)
+!!$            ! ---- Updates Atom Displacements and forces
+                call update_from_lammps(AtomDispl, AtomCoord, AtomForce,  AveDispl, Velocity, virst, avevirst, lmp)
 
-!!$           ! ---- Update Virial Stress from lammps and also obtains average virial stress
-!!$            call update_virial_stress_from_lammps(N, Virst, AveVirst, lmp)
-
-            femstepcounter = femstepcounter + fem_call_back_steps
+                femstepcounter = femstepcounter + fem_call_back_steps
 !!$         Now check passing of dislocations
 !!$            Realistically depending on the nature of the problem and temperature
 !!$              the need is to check for dislocations every md step to ensure that
@@ -363,38 +322,38 @@
 !!$              for testing lammps is run for fem_call_back_steps and then dislocation
 !!$              passing is checked.
 !!$         Provided facility to do this every step as well
-            IF ( dislpass ) THEN
-               filename = 'out/atom_pass.cfg'
-               CALL IOFILE(filename,'formatted  ',logic,.FALSE.)
-               CALL DUMP_ATOM(Atomcoord,Atomdispl,AtomForce,logic)
-               CLOSE (logic)
+                dislpass = .FALSE.
 
-               filename = 'out/atom_pass.vtk'
-               CALL IOFILE(filename,'formatted  ',logic,.FALSE.)
-               CALL DUMP_MESH(Atomcoord,Atomdispl,Ix,logic)
-               CLOSE (logic)
-
-            ENDIF
-            dislpass = .FALSE.
-!!$            write(*, '(A,3I7)')'IX before disl_check ==============================', ix(1,1), ix(2,1), ix(3,1)
-
-            IF ( DISLCHECK(Checkslip,Lostslip,Addedslip,Movedisl,Ix,&
-                 &        Atomcoord,Atomdispl,Itx,ISRelaxed,NUMnp,NDF,NXDm,NUMel,&
-                 &        NEN1,NEWmesh,plottime,dislpass,npass) ) THEN
-               IF ( dislpass ) PRINT * , 'Dislocation removed from atomistics'
+                IF ( DISLCHECK(Checkslip,Lostslip,Addedslip,Movedisl,Ix,&
+                     &        Atomcoord,Atomdispl,Itx,ISRelaxed,NUMnp,NDF,NXDm,NUMel,&
+                     &        NEN1,NEWmesh,plottime,dislpass,npass) ) THEN
+                   IF ( dislpass ) PRINT * , 'Dislocation removed from atomistics'
 !!$	     if (npass > 1) then
 !!$		Nsteps = NstepsOrig*2
 !!$		npass = 0
 !!$	     end if
 
-               WRITE (*,*) 'Disl checked!'
-!!$               mdsteps = mdsteps + 1
-               WRITE (*,*) 'Disl checked by rank' , RANk
-               ndis_checked = ndis_checked + 1
-            END IF
-!!$            write(*, '(A,3I7)')'IX after disl_check ==============================', ix(1,1), ix(2,1), ix(3,1)
+                   WRITE (*,*) 'Disl checked!'
 
-            nnsteps = nnsteps + 1
+                   WRITE (*,*) 'Disl checked by rank' , RANk
+
+                   ndis_checked = ndis_checked + 1
+                END IF
+
+                IF ( dislpass ) THEN
+                   filename = 'out/atom_pass.cfg'
+                   CALL IOFILE(filename,'formatted  ',logic,.FALSE.)
+                   CALL DUMP_ATOM(Atomcoord,Atomdispl,AtomForce,logic)
+                   CLOSE (logic)
+
+                   filename = 'out/atom_pass.vtk'
+                   CALL IOFILE(filename,'formatted  ',logic,.FALSE.)
+                   CALL DUMP_MESH(Atomcoord,Atomdispl,Ix,logic)
+                   CLOSE (logic)
+
+                ENDIF
+
+                nnsteps = nnsteps + 1
 !!$	  if (Moved) then
 !!$       Output the new_atom config after moving atom_displacements
 !!$	     filename='out/moved_atoms.cfg'
@@ -404,57 +363,18 @@
 !!$	     Moved = .false.
 !!$	  end if
 
-            IF ( MOVemesh ) THEN
-!!$               if (Moved) then
-!!$                  Moved = .false.
-!!$               end if
-               IF ( istep==1 ) THEN
-                  CALL GET_CRACK_TIP(Atomcoord,Atomdispl)
-                  IF ( XTIp(1)>0.0D0 ) THEN
-                     IF ( ABS(XTIp(1)-XTIp_init(1))>(X_Move_mesh) ) THEN
-                        DO i = 1 , 2
-                           XTIp_actual(i) = ABS(XTIp(i)-XTIp_init(i))
-                           IF ( XTIp(i)>XTIp_init(i) ) THEN
-                              X_Tip_dir(i) = 1.0D0
-                           ELSE
-                              X_Tip_dir(i) = -1.0D0
-                           ENDIF
-                        ENDDO
-                        PRINT * , 'xtip_actual = ' , XTIp_actual , &
-                             &                     X_Tip_dir
-                        IF ( X_Tip_dir(1)>0.0D0 ) THEN
-                           IF ( INT(XTIp_actual(1)/X_Move_mesh)>0 ) THEN
-                              CALL MOVE_ATOMISTIC_CRACK(Atomcoord,Ix,&
-                                   &                        Atomdispl)
-                              MOVed = .TRUE.
-                           ENDIF
-                        ENDIF
-                        !!$		   return
-                     ENDIF
-                  ENDIF
-               ENDIF
-            ENDIF
-!!$            if (ndisl > 4) then
-!!$               if (mod(iStep,10) .eq. 0) then
-!!$                  filename='out/atom_pass2.cfg'
-!!$                  call iofile(filename,'formatted  ',logic,.false.)
-!!$                  call dump_atom(atomCoord, atomDispl, logic)
-!!$                  close(logic)
-!!$               end if
-!!$            end if
+!!$CHECK THAT THIS IS WORKING
+!!$Check the update to the B array inside dislocation 
+                update_all = .true.
+                call update_lammps_coords(AtomCoord, AtomDispl,update_all, update_pad, lmp)
+                call lammps_command(lmp,'run 0 pre yes post no')
+
+             ENDDO
+
+             mdsteps = mdsteps + fem_call_back_steps
 
 
-			!CHECK THAT THIS IS WORKING
-			!Check the update to the B array inside dislocation 
-            update_all = .true.
-!            update_pad = .true. 
-            call update_lammps_coords(AtomCoord, AtomDispl,update_all, update_pad, lmp)
-         ENDDO
-         
-         mdsteps = mdsteps + fem_call_back_steps
-
-
-      end do
+          end do
 99002 FORMAT (a16,2x,1pe11.4)
 99003 FORMAT (a16,2x,i5)
 99004 FORMAT (a16,2x,a16)

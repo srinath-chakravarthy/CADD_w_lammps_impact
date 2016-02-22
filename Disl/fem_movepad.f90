@@ -196,13 +196,12 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
       DOUBLE PRECISION sf_f , aa , bb, deltas
       DOUBLE PRECISION min_pos , Temperature , time_step_con
 
-      INTEGER FE_LOCATE , i , elem_old, idisl, jdisl, j
+      INTEGER FE_LOCATE , i , elem_old, idisl, jdisl, j, irm
       DOUBLE PRECISION b
       DOUBLE PRECISION ddis
       double precision :: ev_convert1
       CHARACTER*80 error_message
       double precision :: Rold(2), dist_dis
-      integer :: rmdisl(MAX_DISL), irm
 
 !
 !!!!    hacked parameters
@@ -231,6 +230,9 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
      &                *BURgers(2,i))/BURg_length(i)
 !            write(*,*) i,' non sf disl force = ',pk_f(i)
             ddis = SQRT(R_Disl(1,i)**2+R_Disl(2,i)**2)
+            if (isnan(PK_f(i))) then 
+	      PK_f(i) = 0.0d0
+	    end if
             PK_f(i) = PK_f(i) + sf_f
 !!!!        upper limit on velocities
             IF ( ABS(PK_f(i)*mobility)>max_vel ) PK_f(i)&
@@ -267,7 +269,6 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
       ENDDO
 !!$ Checking for dislocation collisions and annihilations
   irm = 0
-  rmdisl = 0
       Do i = 1, ndisl
 	if (elem_disl(i) > 0) then 
 	    do j = i+1, ndisl
@@ -278,12 +279,12 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
 			if (dist_dis < 4.d0*burg_length(j)) then
 			    write(*,'(A,I5,A,I5,A,I5,A,2F15.6,A)') 'Dislocations ', i, ' and ', j, ' are collinding' 
 			    if (BURgers(1,i)*BURgers(1,j) < 0.0d0 .and. BURgers(2,i)*BURgers(2,j) < 0.0d0) then 
-				write(*,'(A,I5,A,I5)') ' removing dislocations ', i
+				write(*,'(A,I5,A,I5)') ' removing dislocations ', i, j
 				!!! need to call remove dislocations
 				irm = irm + 1
-				rmdisl(i) = 1
+				irmdisl(i) = .true.
 				irm = irm + 1
-				rmdisl(j) = 1
+				irmdisl(j) = .true.
 			    else if (dist_dis < burg_length(j)) then 
 				write(*,'(A,I5,A,2F15.6)',advance='no') 'moving dislocation ', j, ' from ', R_disl(1:2,j), ' to '
 				deltas = 2.d0*burg_length(j)
@@ -301,10 +302,13 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
 	end if
       end do
 
-      do i = 1, max_disl
-	if (rmdisl(i) > 0) then 
-	    call disl_remove(i)
-	end if
+      i = 1;
+      do while (i<=ndisl)
+         if (irmdisl(i)) then
+            call disl_remove(i)
+            if (i > 0) i = i-1
+         end if
+         i = i + 1
       end do
 !!$ > @TODO remove image dislocations       
 

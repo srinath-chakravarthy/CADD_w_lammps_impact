@@ -59,6 +59,13 @@
       INTEGER*4 timearray(3)
       DOUBLE PRECISION :: aangle
 
+
+      
+!!$   Extra parameters --- SC
+      integer :: num_interface_atoms
+      double precision, allocatable :: interface_atoms(:,:), interface_map(:)
+ 
+      
 !! VBS added this to read in tolerances
       COMMON /ELEMCONV/ NUMelold
       INTEGER lcrack , NUMelold , numnpc
@@ -180,41 +187,41 @@
                   ENDIF
                ENDIF
 ! Qu modification to remove extra layers of atoms around crack faces
-!$$$            if((j.eq.0.and.x(1,numNodes).lt.-0.01*dx).or.
-!$$$     &           (j.eq.1.and.x(1,numNodes).lt.-0.01*dx) .or.
-!$$$     &      (j.eq.-1.and.x(1,numNodes).lt.-dx) )then
-!$$$c     **************************************************************
-!$$$c     Add this line for a sharp crack
-!$$$c     Comment this line and uncomment to the last 3 lines to
-!$$$c     for blunt crack with 3 layers missing
-!$$$c     **************************************************************
-!$$$c            if(j.eq.0.and.x(1,numNodes).lt.-0.1*dx) then
-!$$$              numNodes=numNodes-1
-!$$$            endif
+!!$            if((j.eq.0.and.x(1,numNodes).lt.-0.01*dx).or.
+!!$     &           (j.eq.1.and.x(1,numNodes).lt.-0.01*dx) .or.
+!!$     &      (j.eq.-1.and.x(1,numNodes).lt.-dx) )then
+!!$c     **************************************************************
+!!$c     Add this line for a sharp crack
+!!$c     Comment this line and uncomment to the last 3 lines to
+!!$c     for blunt crack with 3 layers missing
+!!$c     **************************************************************
+!!$c            if(j.eq.0.and.x(1,numNodes).lt.-0.1*dx) then
+!!$              numNodes=numNodes-1
+!!$            endif
 
 ! FOR NOW ONLY, assign nodes to the crack faces. Leo mentions
 ! this is a hack. But this appears legitimate.
 !     Add back nodes according to desired crack shape
-!$$$  *************************************************
-!$$$  Chakravarthy mods for no crack
-!$$$  *************************************************
-!$$$            if(j.eq.0.and.x(1,numNodes).lt.-0.01*dx) then
-!$$$              numNodes = numNodes+2
-!$$$              x(1,numNodes-1) = xx+mod(j,ndxdy)*dxdy
-!$$$!              x(2,numNodes-1) = yy+2*dy
-!$$$              x(2,numNodes-1) = yy+dy
-!$$$              x(1,numNodes) = xx+mod(j,ndxdy)*dxdy
-!$$$!              x(2,numNodes) = yy-2*dy
-!$$$              x(2,numNodes) = yy
-!$$$!              print *, i, x(1, numNodes)
-!$$$              if(i.eq.-320) then
-!$$$                countLast = numNodes-1
-!$$$              endif
-!$$$            endif
+!!$  *************************************************
+!!$  Chakravarthy mods for no crack
+!!$  *************************************************
+!!$            if(j.eq.0.and.x(1,numNodes).lt.-0.01*dx) then
+!!$              numNodes = numNodes+2
+!!$              x(1,numNodes-1) = xx+mod(j,ndxdy)*dxdy
+!!$!              x(2,numNodes-1) = yy+2*dy
+!!$              x(2,numNodes-1) = yy+dy
+!!$              x(1,numNodes) = xx+mod(j,ndxdy)*dxdy
+!!$!              x(2,numNodes) = yy-2*dy
+!!$              x(2,numNodes) = yy
+!!$!              print *, i, x(1, numNodes)
+!!$              if(i.eq.-320) then
+!!$                countLast = numNodes-1
+!!$              endif
+!!$            endif
 ! Qu modification ends
-!$$$  *************************************************
-!$$$  End Chakravarthy mods for no crack
-!$$$  *************************************************
+!!$  *************************************************
+!!$  End Chakravarthy mods for no crack
+!!$  *************************************************
 
             ENDDO
          ENDIF
@@ -229,13 +236,11 @@
       yymax = -large
       yymin = large
       DO i = 1 , numnodes
-!
          nodesite(1) = X(1,i)
          nodesite(2) = X(2,i)
-         IF ( i/=countlast ) CALL NEARESTBSITE(nodesite,1,.FALSE.,X(1,i)&
-     &        ,igrain)
+         IF ( i/=countlast ) CALL NEARESTBSITE(nodesite,1,.FALSE.,X(1,i),igrain)
 
-!! find xxmax, xxmin, etc.
+!!$ find xxmax, xxmin, etc.
          xxmax = MAX(X(1,i),xxmax)
          xxmin = MIN(X(1,i),xxmin)
          yymax = MAX(X(2,i),yymax)
@@ -248,33 +253,28 @@
       simulationcell%xmax = xxmax
       simulationcell%YMIN = yymin
       simulationcell%ymax = yymax
-!     hard coded for 1 grain
+!!$     hard coded for 1 grain
 
       IF ( mirror ) THEN
          NUMnp = numnodes
          DO i = 1 , NUMnp
-!
             IF ( X(2,i)<yymin+tol ) THEN
                nodesite(1) = X(1,i)
                nodesite(2) = -136.85
                CALL NEARESTBSITE(nodesite,1,.FALSE.,X(1,i),igrain)
             ENDIF
-!
             numnodes = numnodes + 1
             nodesite(1) = X(1,i)
             nodesite(2) = 2*yymin - X(2,i)
             CALL NEARESTBSITE(nodesite,1,.FALSE.,X(1,numnodes),igrain)
-!
          ENDDO
-!
          yyminorig = yymin
          yymin = 2*yymin - yymax
-!
          simulationcell%YMIN = yymin
       ENDIF
 
 
-! Remove coincident nodes
+!!$ Remove coincident nodes
       PRINT * , 'Removing coincident nodes'
       coincidentnodes = 0
       NUMnp = numnodes
@@ -293,8 +293,7 @@
          ENDIF
       ENDDO
 
-      IF ( coincidentnodes/=0 ) WRITE (6,*) coincidentnodes , &
-     &                                 ' coincident nodes removed'
+      IF ( coincidentnodes/=0 ) WRITE (6,*) coincidentnodes ,' coincident nodes removed'
 
       NUMnp = numnodes
       IF ( NUMnp>MAXnp ) THEN
@@ -305,13 +304,12 @@
       WRITE (6,*) 'Total nodes: numnp = ' , NUMnp
 
 
-!     Apply boundary conditions and define the boundary for the
-!     triangulator
+!!$     Apply boundary conditions and define the boundary for the triangulator
 
       NCE = 0
       nodestart = 0
 
-!     find all external boundary nodes
+!!$     find all external boundary nodes
       simulationcell%XMIN = simulationcell%XMIN + 10.D0
       simulationcell%xmax = simulationcell%xmax - 10.D0
       simulationcell%YMIN = simulationcell%YMIN + 10.D0
@@ -329,8 +327,8 @@
          left = (X(1,i)<simulationcell%XMIN)
          right = (X(1,i)>simulationcell%xmax)
 
-!     store all boundary points, but put crack faces at the beginning of
-!     elist.  While you are at it, apply the b.c.s
+!!$     store all boundary points, but put crack faces at the beginning of
+!!$     elist.  While you are at it, apply the b.c.s
 
          IF ( bot .OR. right .OR. left ) THEN
             NCE = NCE + 1
@@ -339,23 +337,22 @@
             ENDIF
             ELIst(1,NCE) = i
 
-! apply the b.c's
+!!$ apply the b.c's
             IF ( bot .OR. right .OR. left ) THEN
-!$$$            if (bot) then
+               !! if (bot) then
                Id(1,i) = 1
                Id(2,i) = 1
-!!$               PRINT * , 'BCs on  node' , i
+               !!  PRINT * , 'BCs on  node' , i
             ENDIF
-!
          ENDIF
       ENDDO
 
-! sort the boundary so that is goes CCW.
+!!$ sort the boundary so that is goes CCW.
       ALLOCATE (nodeangle(NUMnp))
       nodeangle = 0.
       DO i = nodestart + 1 , NCE
          inode = ELIst(1,i)
-!     YET ANOTHER HACK
+!!$     YET ANOTHER HACK
          nodeangle(inode) = DATAN2(X(2,inode)-1.0D0,X(1,inode))
       ENDDO
       nsort = NCE - nodestart
@@ -364,7 +361,7 @@
 
       NCE = NCE - 1
       nodestart = NCE
-!     Now add top boundary
+!!$     Now add top boundary
       DO i = 1 , NUMnp
          top = (X(2,i)>simulationcell%ymax)
          IF ( top ) THEN
@@ -378,13 +375,13 @@
                PRINT * , "BC's on atom" , i
             ENDIF
          ENDIF
-!$$$         if (top) then
-!$$$            id(i,1) = 1
-!$$$            id(i,2) = 1
-!$$$         end if
+!!!$         if (top) then
+!!$            id(i,1) = 1
+!!!$            id(i,2) = 1
+!!!$         end if
       ENDDO
 
-! sort the upper ledge so that is goes CW (from left to right).
+!!$ sort the upper ledge so that is goes CW (from left to right).
       ALLOCATE (nodeangle(NUMnp))
       nodeangle = 0.
       DO i = nodestart + 1 , NCE
@@ -441,46 +438,48 @@
       innerregion%ymax = ymax(1)/dwfactory
       CALL FINDATOMREGIONSIZE(X,dx,dy,tol,innerregion,atomregion)
 	  
-	  print*,'dx', dx
-	  print*,'dy', dy
-	  
-	  midxAtom = (INT((atomregion%xmax+atomregion%XMIN)/(2.*dx)))*dx
-	  
-	  !x placement is offset for even and odd y rows
-	  if (MOD(ABS(INT((atomregion%ymax+atomregion%YMIN)/dy/2)),2) == 0) then
-	    print*,'even'
-		midyAtom = (INT((atomregion%ymax+atomregion%YMIN)/dy/2))*dy
-	  endif
-	  
-	  if (MOD(ABS(INT((atomregion%ymax+atomregion%YMIN)/dy/2)),2) /= 0) then
-	    print*,'odd'
-		midyAtom = (INT((atomregion%ymax+atomregion%YMIN)/dy/2)+1)*dy
-	  endif	  
-	  
-	  print*,'midxAtom', midxAtom
-	  print*,'midyAtom', midyAtom
-	  
-	  print*,'(midxAtom + smalltol)', (midxAtom + smalltol)
-	  print*,'(midxAtom - smalltol)', (midxAtom - smalltol)
-	  print*,'(midyAtom + smalltol)', (midyAtom + smalltol)
-	  print*,'(midyAtom - smalltol)', (midyAtom - smalltol)
+      print*,'dx', dx
+      print*,'dy', dy
+      
+      midxAtom = (INT((atomregion%xmax+atomregion%XMIN)/(2.*dx)))*dx
+      
+                                !x placement is offset for even and odd y rows
+      if (MOD(ABS(INT((atomregion%ymax+atomregion%YMIN)/dy/2)),2) == 0) then
+         print*,'even'
+         midyAtom = (INT((atomregion%ymax+atomregion%YMIN)/dy/2))*dy
+      endif
+      
+      if (MOD(ABS(INT((atomregion%ymax+atomregion%YMIN)/dy/2)),2) /= 0) then
+         print*,'odd'
+         midyAtom = (INT((atomregion%ymax+atomregion%YMIN)/dy/2)+1)*dy
+      endif
+
+      
+   
+      print*,'midxAtom', midxAtom
+      print*,'midyAtom', midyAtom
+
+      print*,'(midxAtom + smalltol)', (midxAtom + smalltol)
+      print*,'(midxAtom - smalltol)', (midxAtom - smalltol)
+      print*,'(midyAtom + smalltol)', (midyAtom + smalltol)
+      print*,'(midyAtom - smalltol)', (midyAtom - smalltol)
 	  
       DO i = 1 , NUMnp
 		 
-!         IF ( X(1,i)==0.0D0 ) THEN
-!            IF ( X(2,i)==0.0D0 ) THEN 
-!			   temp_slip = i
-!			   print*,'temp_slip', temp_slip
-!			ENDIF
-!         ENDIF
+!!         IF ( X(1,i)==0.0D0 ) THEN
+!!            IF ( X(2,i)==0.0D0 ) THEN 
+!!			   temp_slip = i
+!!			   print*,'temp_slip', temp_slip
+!!			ENDIF
+!!         ENDIF
 
-	     !print*,'X(1,i)', X(1,i)
-	     !print*,'X(2,i)', X(2,i)		
+	     !!print*,'X(1,i)', X(1,i)
+	     !!print*,'X(2,i)', X(2,i)		
 
          IF ( X(1,i) < 1.0 .AND. X(1,i) > -1.0 ) THEN
-		    !print*,'X(1,i)', X(1,i)
+		    !!print*,'X(1,i)', X(1,i)
             IF ( X(2,i) >  -35.0 .AND. X(2,i) <  -30.0) THEN 
-			   !temp_slip = i
+			   !!temp_slip = i
 			   print*,'X(1,i)', X(1,i)
 			   print*,'X(2,i)', X(2,i)
 			   temp_slip = i
@@ -488,69 +487,67 @@
 			ENDIF
          ENDIF		 
 
-         IF ( X(1,i) < (midxAtom + smalltol) .AND. &
-     &		 X(1,i) > (midxAtom - smalltol) ) THEN
-	        !print*,'X(1,i)', X(1,i)
-            IF ( (X(2,i) < (midyAtom + smalltol)) &
-     &      .AND. (X(2,i) > (midxAtom - smalltol)) ) THEN 
-			   temp_slip = i
-			   print*,'temp_slip', temp_slip
-			ENDIF
+         IF ( X(1,i) < (midxAtom + smalltol) .AND.  X(1,i) > (midxAtom - smalltol) ) THEN
+	        !!print*,'X(1,i)', X(1,i)
+            IF ( (X(2,i) < (midyAtom + smalltol)) .AND. (X(2,i) > (midxAtom - smalltol)) ) THEN 
+               temp_slip = i
+               print*,'temp_slip', temp_slip
+            ENDIF
          ENDIF
 		 
       ENDDO
 	  
-	  print*,'check after smalltol'
+      print*,'check after smalltol'
 	  
-	  xslip_start = X(1,temp_slip+1)
+      xslip_start = X(1,temp_slip+1)
       yslip_start = (X(2,temp_slip)+X(2,temp_slip+1))/2.D0
 	  
-	  print*,'xslip_start', xslip_start
-	  print*,'yslip_start', yslip_start
+      print*,'xslip_start', xslip_start
+      print*,'yslip_start', yslip_start
+      
+      print*,'-----------'
+      
+      print*,'X(1,temp_slip+1)', X(1,temp_slip+1)
+      print*,'X(1,temp_slip)', X(1,temp_slip)
 	  
-	  print*,'-----------'
-	  
-	  print*,'X(1,temp_slip+1)', X(1,temp_slip+1)
-	  print*,'X(1,temp_slip)', X(1,temp_slip)
-	  
-	  print*,'X(2,temp_slip+1)', X(2,temp_slip+1)
-	  print*,'X(2,temp_slip)', X(2,temp_slip)
+      print*,'X(2,temp_slip+1)', X(2,temp_slip+1)
+      print*,'X(2,temp_slip)', X(2,temp_slip)
 
       xxx1 = X(1,temp_slip+1) - X(1,temp_slip)
       yyy1 = X(2,temp_slip+1) - X(2,temp_slip)
 	  
-	  print*,'xxx1', xxx1
-	  print*, 'yyy1', yyy1
-	  
+      print*,'xxx1', xxx1
+      print*, 'yyy1', yyy1
+
       slip_angle(1) = ATAN2(yyy1,xxx1)
-	  
-	  print*,'slip_angle(1)', slip_angle(1)
-	  
+
+      print*,'slip_angle(1)', slip_angle(1)
+
       dxslip = ABS(xxx1)*2.D0
       dyslip = ABS(yyy1)
-	  
-	  PRINT * , 'DX' , dxslip
-      PRINT * , 'DY' , dyslip
-	  
-	  print*,'-----------'
-	  
-!      PRINT * , xxx1 , yyy1 , slip_angle(1)
-!      PRINT * , 'Slip plane start and end' , temp_slip
-!      PRINT * , 'x_start' , xslip_start , X(1,temp_slip+1)
-!      PRINT * , 'y_start' , yslip_start
 
-	  print*,'X(1,temp_slip-1)', X(1,temp_slip-1)
-	  print*,'X(1,temp_slip)', X(1,temp_slip)
+      PRINT * , 'DX' , dxslip
+      PRINT * , 'DY' , dyslip
+
+      print*,'-----------'
 	  
-	  print*,'X(2,temp_slip-1)', X(2,temp_slip-1)
-	  print*,'X(2,temp_slip)', X(2,temp_slip)
+      !!      PRINT * , xxx1 , yyy1 , slip_angle(1)
+      !!      PRINT * , 'Slip plane start and end' , temp_slip
+      !!      PRINT * , 'x_start' , xslip_start , X(1,temp_slip+1)
+      !!      PRINT * , 'y_start' , yslip_start
+      
+      print*,'X(1,temp_slip-1)', X(1,temp_slip-1)
+      print*,'X(1,temp_slip)', X(1,temp_slip)
+
+      print*,'X(2,temp_slip-1)', X(2,temp_slip-1)
+      print*,'X(2,temp_slip)', X(2,temp_slip)
 
       xxx1 = X(1,temp_slip-1) - X(1,temp_slip)
       yyy1 = ABS(X(2,temp_slip-1)-X(2,temp_slip))
-	  
-	  print*,'xxx1', xxx1
-	  print*, 'yyy1', yyy1
-	  
+
+      print*,'xxx1', xxx1
+      print*, 'yyy1', yyy1
+
       slip_angle(2) = ATAN2(yyy1,xxx1)
       PRINT * , xxx1 , yyy1 , slip_angle(2)
       slip_angle(3) = 0.0D0
@@ -562,7 +559,7 @@
 
 
 
-!     Find continuum region elements
+!!$     Find continuum region elements
       IF ( mirror ) THEN
          mirroratomregion%XMIN = atomregion%XMIN
          mirroratomregion%xmax = atomregion%xmax
@@ -759,22 +756,22 @@
 
       DO i = 1 , NDBpoly
          detectionband%XMIN = atomregion%XMIN + rcutmesh + (i-1)*dx + 10.0
-!$$$         detectionBand%xmax = atomRegion%xmax - 2.0*rcutmesh
-!$$$         detectionBand%ymin = atomRegion%ymin + 2.0*rcutmesh
-!$$$         detectionBand%ymax = atomRegion%ymax - 2.0*rcutmesh
+!!$         detectionBand%xmax = atomRegion%xmax - 2.0*rcutmesh
+!!$         detectionBand%ymin = atomRegion%ymin + 2.0*rcutmesh
+!!$         detectionBand%ymax = atomRegion%ymax - 2.0*rcutmesh
 
          detectionband%xmax = atomregion%xmax - rcutmesh - (i-1)*dx - 10.0
          detectionband%YMIN = atomregion%YMIN + rcutmesh + (i-1)*dy + 10.0
-!$$$         detectionband%ymax = atomregion%ymax - rcutmesh -
+!!$         detectionband%ymax = atomregion%ymax - rcutmesh -
          !(i-1)*dy
 		 detectionband%ymax = 0.1
-!$$$
-!$$$         detectionBand%xmax = min( minDb+(i-1)*dx
-!$$$     $                            ,atomRegion%xmax - rcutmesh)
-!$$$         detectionBand%ymin = max(-minDb-(i-1)*dy
-!$$$     $                            ,atomRegion%ymin + rcutmesh)
-!$$$         detectionBand%ymax = min( minDb+(i-1)*dy
-!$$$     $                            ,atomRegion%ymax - rcutmesh)
+!!$
+!!$         detectionBand%xmax = min( minDb+(i-1)*dx
+!!$     $                            ,atomRegion%xmax - rcutmesh)
+!!$         detectionBand%ymin = max(-minDb-(i-1)*dy
+!!$     $                            ,atomRegion%ymin + rcutmesh)
+!!$         detectionBand%ymax = min( minDb+(i-1)*dy
+!!$     $                            ,atomRegion%ymax - rcutmesh)
 
 
          DBPoly(1,1,i) = detectionband%XMIN
@@ -789,20 +786,20 @@
          DBPoly(1,4,i) = detectionband%XMax
          DBPoly(2,4,i) = detectionband%ymax
 
-!$$$     For this particular detection band the first layer is closest
-!$$$     to the boundary
-!$$$     Any other logic can be used ...
+!!$     For this particular detection band the first layer is closest
+!!$     to the boundary
+!!$     Any other logic can be used ...
          IF ( i==1 ) DBBoundnear(i) = .TRUE.
 
 
-!$$$         print *, 'Detection band region', i,
-!$$$     $        dbpoly(1,1,i), dbpoly(2,1,i)
-!$$$         print *,
-!$$$     $        'Detection band region', i,dbpoly(1,2,i), dbpoly(2,2,i
-!$$$         print
-!$$$     $        *, 'Detection band region', i,dbpoly(1,3,i), dbpoly(2,
-!$$$         print
-!$$$     $        *, 'Detection band region', i,dbpoly(1,4,i), dbpoly(2,
+!!$         print *, 'Detection band region', i,
+!!$     $        dbpoly(1,1,i), dbpoly(2,1,i)
+!!$         print *,
+!!$     $        'Detection band region', i,dbpoly(1,2,i), dbpoly(2,2,i
+!!$         print
+!!$     $        *, 'Detection band region', i,dbpoly(1,3,i), dbpoly(2,
+!!$         print
+!!$     $        *, 'Detection band region', i,dbpoly(1,4,i), dbpoly(2,
          PRINT * , 'Detection Band Region' , i
          WRITE (*,'(8f10.3)') DBPoly(1,1,i) , DBPoly(2,1,i) , &
      &                        DBPoly(1,2,i) , DBPoly(2,2,i) , &
@@ -813,6 +810,44 @@
 ! Qu modified detection band rings ends
 
       WRITE (6,*) 'width of the detection band: rcutmesh = ' , rcutmesh
+
+      atom_xmin = atomregion%XMIN
+      atom_xmax = atomregion%xmax
+      atom_ymin =  atomregion%YMIN
+      atom_ymax = atomregion%ymax
+
+      process_xmin = simulationcell%xmin
+      process_xmax = simulationcell%xmax
+      process_ymin = simulationcell%ymin
+      process_ymax = simulationcell%ymax
+      
+
+      num_interface_atoms = 0
+      do i = 1, numnp
+         if (isrelaxed(i) == 2) then
+            num_interface_atoms = num_interface_atoms + 1
+         end if
+      end do
+
+      !!!$num_interface_atoms = num_interface_atoms
+      allocate(interface_atoms(3,num_interface_atoms))
+      allocate(interface_map(num_interface_atoms))
+      ii = 0
+      do i = 1, numnp
+         if (isrelaxed(i) == 2) then
+            ii = ii + 1
+            interface_atoms(:,ii) = x(:,i)
+            interface_map(ii) = i
+         end if
+      end do
+
+      
+      
+      call init_slip(0.0d0, 0.0d0)
+      print *, "Interface atoms = ", num_interface_atoms
+!!$      call gen_slip_planes(interface_atoms)
+
+      
 ! 100  CALL GEN_SLIP_PLANES(simulationcell%XMIN,simulationcell%xmax,&
 !     &                     simulationcell%YMIN,simulationcell%ymax,&
 !     &                     atomregion%XMIN,atomregion%xmax,&
@@ -835,11 +870,10 @@
 
 
 !
-!***********************************************************************
-!	Checks to see if a 2D point x is located inside thisRegion.
+!!$***********************************************************************
+!!$	Checks to see if a 2D point x is located inside thisRegion.
       LOGICAL FUNCTION INSIDEREGION(X,Thisregion)
       IMPLICIT NONE
-!*--INSIDEREGION741
 
       TYPE REGION
          DOUBLE PRECISION XMIN , XMAX , YMIN , YMAX
@@ -852,25 +886,18 @@
      &               X(2)>Thisregion%YMIN .AND. X(2)<Thisregion%YMAX)
 
       END FUNCTION INSIDEREGION
-!*==qsortr.spg  processed by SPAG 6.70Rc at 12:37 on 29 Oct 2015
 
-!***********************************************************************
+!!$***********************************************************************
       SUBROUTINE QSORTR(N,List,Xkey,Nxdm,Ind,Sign)
       IMPLICIT NONE
-!*--QSORTR759
-!*** Start of declarations inserted by SPAG
+
       DOUBLE PRECISION guess , Sign , Xkey
       INTEGER Ind , Nxdm
-!*** End of declarations inserted by SPAG
-!
+
       DIMENSION Xkey(Nxdm,1)
-      INTEGER List(2,*) , N , ll , lr , lm , nl , nr , ltemp , stktop , &
-     &        MAXSTK
-!
-      PARAMETER (MAXSTK=32)
-!
+      INTEGER List(2,*) , N , ll , lr , lm , nl , nr , ltemp , stktop 
+      INTEGER, PARAMETER :: MAXSTK=32
       INTEGER lstack(MAXSTK) , rstack(MAXSTK)
-!
       ll = 1
       lr = N
       stktop = 0
@@ -880,9 +907,9 @@
             nr = lr
             lm = (ll+lr)/2
             guess = Sign*Xkey(Ind,List(1,lm))
-!
-!     Find xkeys for exchange
-!
+!!$
+!!$     Find xkeys for exchange
+!!$
  20         DO WHILE ( Sign*Xkey(Ind,List(1,nl))<guess )
                nl = nl + 1
             ENDDO
@@ -899,9 +926,9 @@
                   nr = nr - 1
                   GOTO 20
                ENDIF
-!
-!     Deal with crossing of pointers
-!
+!!$
+!!$     Deal with crossing of pointers
+!!$
                IF ( nl<=nr ) THEN
                   IF ( nl<nr ) THEN
                      ltemp = List(1,nl)
@@ -911,9 +938,9 @@
                   nl = nl + 1
                   nr = nr - 1
                ENDIF
-!
-!     Select sub-list to be processed next
-!
+!!$
+!!$     Select sub-list to be processed next
+!!$
                stktop = stktop + 1
                IF ( nr<lm ) THEN
                   lstack(stktop) = nl
@@ -927,9 +954,7 @@
                GOTO 100
             ENDDO
          ENDIF
-!
-!     Process any stacked sub-lists
-!
+!!$     Process any stacked sub-lists
          IF ( stktop/=0 ) THEN
             ll = lstack(stktop)
             lr = rstack(stktop)
@@ -940,15 +965,13 @@
  100  ENDDO
 !
       END SUBROUTINE QSORTR
-!*==findatomregionsize.spg  processed by SPAG 6.70Rc at 12:37 on 29 Oct
 
 
 
-!     Find max/min of atomistic region
+!!$     Find max/min of atomistic region
       SUBROUTINE FINDATOMREGIONSIZE(Atomcoord,Dx,Dy,Tol,Innerregion,Atomregion)
       USE MOD_GLOBAL
       IMPLICIT NONE
-!*--FINDATOMREGIONSIZE851
 
       TYPE REGION
          DOUBLE PRECISION xmin , xmax , ymin , ymax
@@ -956,10 +979,10 @@
       TYPE (REGION) Atomregion , Innerregion
       DOUBLE PRECISION Atomcoord(NDF,*) , Dx , Dy , Tol
 
-!	local variables
+!!$	local variables
       DOUBLE PRECISION xmin , xmax , ymin , ymax , x , y , large
       INTEGER inode
-!	functions
+!!$	functions
       LOGICAL INSIDEREGION
 
       large = 1.E30
@@ -974,14 +997,12 @@
 
          x = Atomcoord(1,inode)
          y = Atomcoord(2,inode)
-!
          IF ( INSIDEREGION(Atomcoord(1:2,inode),Innerregion) ) THEN
             xmax = MAX(xmax,x)
             ymax = MAX(ymax,y)
             xmin = MIN(xmin,x)
             ymin = MIN(ymin,y)
          ENDIF
-!
       ENDDO
 
       xmax = xmax - Dx + Tol
@@ -992,9 +1013,9 @@
       xmax = xmax - Dx
       xmin = xmin + Dx
 	  
-	  !for free surface, no need to exclude 'interface' atoms
-      !ymax = ymax - Dy
-	  ymax = ymax
+!!$for free surface, no need to exclude 'interface' atoms
+      !!ymax = ymax - Dy
+      ymax = ymax
 	  
       ymin = ymin + Dy
 
@@ -1004,15 +1025,12 @@
       Atomregion%ymax = ymax
 
       END SUBROUTINE FINDATOMREGIONSIZE
-!*==incatoms.spg  processed by SPAG 6.70Rc at 12:37 on 29 Oct 2015
 
-! Qu added begin
-!
-      SUBROUTINE INCATOMS(X)
+!!$ Qu added begin
+     SUBROUTINE INCATOMS(X)
       USE MOD_GLOBAL
       USE MOD_GRAIN
       IMPLICIT NONE
-!*--INCATOMS911
 
       DOUBLE PRECISION X
       DIMENSION X(NXDm,1)
@@ -1032,28 +1050,25 @@
       ENDDO
 
       END SUBROUTINE INCATOMS
-!*==inserthatom.spg  processed by SPAG 6.70Rc at 12:37 on 29 Oct 2015
-!
-! Qu added ends
+!!$ Qu added ends
 
-!	c*********************************************************************
+!!$*********************************************************************
       SUBROUTINE INSERTHATOM(X)
       USE MOD_GLOBAL
       USE MOD_GRAIN
       IMPLICIT NONE
-!*--INSERTHATOM940
 
       DOUBLE PRECISION X
       DIMENSION X(NXDm,1)
 
-!----Local variables
+!!$----Local variables
       INTEGER i , j , atomhnum , inhatoms
       CHARACTER*80 input_file
 
       input_file = 'interstitial.inp'
       OPEN (UNIT=10,FILE=input_file,STATUS='old')
       READ (10,*) inhatoms
-!c--  JS
+!!$--  JS
       NUMtoth = inhatoms
       DO i = 1 , inhatoms
          NUMnp = NUMnp + 1
@@ -1061,23 +1076,18 @@
          READ (10,*) atomhnum , (X(j,NUMnp),j=1,3)
       ENDDO
       END SUBROUTINE INSERTHATOM
-!*==perturbmesh.spg  processed by SPAG 6.70Rc at 12:37 on 29 Oct 2015
 
-!***********************************************************************
+!!$***********************************************************************
 
-!***********************************************************************
+!!$***********************************************************************
       SUBROUTINE PERTURBMESH(X,Nxdm,Numnp,Perturb)
       IMPLICIT NONE
-!*--PERTURBMESH967
-!*** Start of declarations inserted by SPAG
       INTEGER Numnp , Nxdm
       REAL Perturb , X
-!*** End of declarations inserted by SPAG
       END SUBROUTINE PERTURBMESH
-!*==getrandomnumber1.spg  processed by SPAG 6.70Rc at 12:37 on 29 Oct 20
 
 
-! **********************************************************************
+!!$ **********************************************************************
 !       logical function inside(x,x1,x2,y1,y2)
 !       implicit none
 !       double precision x(2),x1,x2,y1,y2
@@ -1087,11 +1097,8 @@
 !
       DOUBLE PRECISION FUNCTION GETRANDOMNUMBER1()
       IMPLICIT NONE
-!*--GETRANDOMNUMBER1986
       DOUBLE PRECISION random , ZBQLU01
-!
       random = -1.D0 + 2.D0*ZBQLU01(0.0D0)
-!
       IF ( random>0 ) THEN
          random = 1.D0
       ELSEIF ( random<0 ) THEN
@@ -1104,88 +1111,148 @@
       END FUNCTION GETRANDOMNUMBER1
 
 
-!$$$      subroutine move_mesh(id, x, ix, f, b, dr, db)
-!$$$!     Interpolates the displacements and forcs at the current node
-!$$$!     x from x+xtip(1), xtip(1) is the currect crack tip position
-!$$$!     1) Calculate element in which x(1) + xtip(1) exists
-!$$$!     2) Calculate the tri-coord of the x_new
-!$$$!     3) Interpolate Displacments and the forces to x_new
-!$$$!     4) b(x(1)) = b(x_new(1))
-!$$$!     5) dr(x(1)) = dr(x_new(1))
-!$$$!     6) db(x(1)) = db(x_new(1))
-!$$$!     6) id, ix, f, itx all stay the same
-!$$$      use mod_grain
-!$$$      use mod_global
-!$$$      use mod_file
-!$$$      use mod_boundary
-!$$$      use mod_crack
-!$$$      use mod_material
-!$$$      use mod_dd_slip
-!$$$      implicit none
-!$$$      use "./Disl/mod_disl_parameters"
-!$$$      use "./Disl/mod_fem_paramters"
-!$$$
-!$$$!     Input variables
-!$$$      double precision b(ndf,*), x(nxdm,*),f(ndf,*),dr(*),db(*)
-!$$$      integer id(ndf,*),ix(nen1,*)
-!$$$
-!$$$!     common declarations
-!$$$      common/debugger/debug
-!$$$      logical debug
-!$$$      double precision tol
-!$$$
-!$$$!     Local variables
-!$$$      integer i, j, iNode, iel, nel
-!$$$      logical MoveMesh
-!$$$      logical, allocatable :: examined(:)
-!$$$      double precision, allocatable :: x_new(:,:)
-!$$$      double precision :: coord(3), el_coord(3,3), disp(3), force(3)
-!$$$      double precision fe_locate
-!$$$!     x_new = x + xtip
-!$$$
-!$$$
-!$$$
-!$$$!!!   Operations are performed only if xtip(1) > x_move_mesh
-!$$$!     Need to make this value an input parameter or
-!$$$!     a fixed value of the atomistic box size
-!$$$      if (xtip(1) > x_move_mesh) then
-!$$$         MoveMesh = .true.
-!$$$         allocate(x_new(nxdm,numnp))
-!$$$         allocate(examined(numnp))
-!$$$         examined = .true.
-!$$$         x_new(1,:) = x(1,1:numnp) + xtip(1)
-!$$$         x_new(2:nxdm,:) = x(2:nxdm,1:numnp)
-!$$$      else
-!$$$         MoveMesh = .false.
-!$$$         print *, 'No moving mesh operations performed'
-!$$$         return
-!$$$      end if
-!$$$
-!$$$!     Loop through all the FE elements
-!$$$      do iel = 1, numel
-!$$$!        Check if the element is a continuum element
-!$$$         if (ix(4,iel) .eq. 0) then
-!$$$!           Loop through all the nodes of the element
-!$$$            do i = 1,nen1-1
-!$$$               inode = ix(i,iel)
-!$$$               if (isRelaxed(inode) .eq. 1) then
-!$$$                  if (examined(inode)) then
-!$$$                     ! Locate the element in which x_new exists
-!$$$                     nel = fe_locate(x_new(1:nxdm,inode),iel)
-!$$$                     ! Store coordinates of the 3 nodes
-!$$$                     el_coord = 0.0d0
-!$$$                     do j = 1,nen1-1
-!$$$                        el_coord(j,1:nxdm) = x(:,ix(j,nel))
-!$$$                     end do
-!$$$                     examined(inode) = .false.
-!$$$                     call fe_tricoord(el_coord(1,:), el_coord(2,:),
-!$$$     $                    el_coord(3,:), coord)
-!$$$                  end if
-!$$$               end if
-!$$$            end do
-!$$$         end if
-!$$$      end do
-!$$$
-      !$$$      end subroutine move_mesh
+!!$      subroutine move_mesh(id, x, ix, f, b, dr, db)
+!!$!     Interpolates the displacements and forcs at the current node
+!!$!     x from x+xtip(1), xtip(1) is the currect crack tip position
+!!$!     1) Calculate element in which x(1) + xtip(1) exists
+!!$!     2) Calculate the tri-coord of the x_new
+!!$!     3) Interpolate Displacments and the forces to x_new
+!!$!     4) b(x(1)) = b(x_new(1))
+!!$!     5) dr(x(1)) = dr(x_new(1))
+!!$!     6) db(x(1)) = db(x_new(1))
+!!$!     6) id, ix, f, itx all stay the same
+!!$      use mod_grain
+!!$      use mod_global
+!!$      use mod_file
+!!$      use mod_boundary
+!!$      use mod_crack
+!!$      use mod_material
+!!$      use mod_dd_slip
+!!$      implicit none
+!!$      use "./Disl/mod_disl_parameters"
+!!$      use "./Disl/mod_fem_paramters"
+!!$
+!!$!     Input variables
+!!$      double precision b(ndf,*), x(nxdm,*),f(ndf,*),dr(*),db(*)
+!!$      integer id(ndf,*),ix(nen1,*)
+!!$
+!!$!     common declarations
+!!$      common/debugger/debug
+!!$      logical debug
+!!$      double precision tol
+!!$
+!!$!     Local variables
+!!$      integer i, j, iNode, iel, nel
+!!$      logical MoveMesh
+!!$      logical, allocatable :: examined(:)
+!!$      double precision, allocatable :: x_new(:,:)
+!!$      double precision :: coord(3), el_coord(3,3), disp(3), force(3)
+!!$      double precision fe_locate
+!!$!     x_new = x + xtip
+!!$
+!!$
+!!$
+!!$!!!   Operations are performed only if xtip(1) > x_move_mesh
+!!$!     Need to make this value an input parameter or
+!!$!     a fixed value of the atomistic box size
+!!$      if (xtip(1) > x_move_mesh) then
+!!$         MoveMesh = .true.
+!!$         allocate(x_new(nxdm,numnp))
+!!$         allocate(examined(numnp))
+!!$         examined = .true.
+!!$         x_new(1,:) = x(1,1:numnp) + xtip(1)
+!!$         x_new(2:nxdm,:) = x(2:nxdm,1:numnp)
+!!$      else
+!!$         MoveMesh = .false.
+!!$         print *, 'No moving mesh operations performed'
+!!$         return
+!!$      end if
+!!$
+!!$!     Loop through all the FE elements
+!!$      do iel = 1, numel
+!!$!        Check if the element is a continuum element
+!!$         if (ix(4,iel) .eq. 0) then
+!!$!           Loop through all the nodes of the element
+!!$            do i = 1,nen1-1
+!!$               inode = ix(i,iel)
+!!$               if (isRelaxed(inode) .eq. 1) then
+!!$                  if (examined(inode)) then
+!!$                     ! Locate the element in which x_new exists
+!!$                     nel = fe_locate(x_new(1:nxdm,inode),iel)
+!!$                     ! Store coordinates of the 3 nodes
+!!$                     el_coord = 0.0d0
+!!$                     do j = 1,nen1-1
+!!$                        el_coord(j,1:nxdm) = x(:,ix(j,nel))
+!!$                     end do
+!!$                     examined(inode) = .false.
+!!$                     call fe_tricoord(el_coord(1,:), el_coord(2,:),
+!!$     $                    el_coord(3,:), coord)
+!!$                  end if
+!!$               end if
+!!$            end do
+!!$         end if
+!!$      end do
+!!$
+!!$      end subroutine move_mesh
 
 
+      subroutine init_slip(xstart, ystart)
+            use mod_dd_slip
+            use mod_dislocation
+            use mod_global
+            use mod_grain
+            !!> Size of atomic region in x and y
+            double precision, intent(in) :: xstart, ystart
+
+            integer :: isys !> @var incremental variable deliniating slip systems for this geometry
+            
+            double precision, parameter :: tol_burger = 1.d-6
+            double precision, parameter :: pii = 4.d0*atan(1.0d0)
+            
+            integer :: i, j
+            double precision :: crossi(3), crossj(3)
+            double precision :: normi(3), bi(3), normj(3), bj(3)
+            
+            
+            !!> starting location to look for slip planes
+!!$  Check to see if the burgers vectors have been initialized
+            if (nburger <= 0 ) then
+               call error_handler("Burgers vector not initialized")
+            end if
+            isys = 0
+            phislp = 0.0d0
+            do i = 1, nburger
+	      normi = normal(1:3,i)
+	      bi = burg(1:3,i)
+               !! Ignoring extra zero burgers vector slip system
+               if (abs(normi(1)) > tol_burger .or. abs(normi(2)) > tol_burger) then
+                  call cross_product(bi, normi, crossi)
+                  do j = i+1, nburger
+                     if (i /= j) then
+                        bj = burg(1:3,j)
+                        normj = normal(1:3,j)
+                        !! Ignoring extra zero burgers vector slip system
+                        if (abs(normj(1)) > tol_burger .or. abs(normj(2)) > tol_burger) then
+                           !! Add slip systems
+                           if (abs(normi(1)-normj(1)) < tol_burger &
+                                .and. abs(normi(2)-normj(2)) < tol_burger &
+                                .and. abs(normi(3)-normj(3)) < tol_burger) then
+                              call cross_product(bj, normj, crossj)
+                              if (crossi(3) > 0.0d0) then 
+                                 isys = isys + 1
+                                 phislp(isys) = pii + atan2(bi(2), bi(1))
+                                 print *, 'Slip system added ', isys, phislp(isys)*180.0d0/pii
+                              else if (crossj(3) > 0.0d0) then
+                                 isys = isys + 1
+                                 phislp(isys) = pii + atan2(bi(2), bi(1))
+                                 print *, 'Slip system added ', isys, phislp(isys)*180.0d0/pii
+                              end if
+                           end if
+                        end if
+                     end if
+                  end do
+               end if
+            end do
+            nsys = isys
+          return  
+      end subroutine init_slip

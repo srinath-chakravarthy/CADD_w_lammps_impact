@@ -1156,6 +1156,11 @@
          DO i = 1 , numpnts
             WRITE (Logic,'(3e15.6)') DBLE(Id(1,i)) , DBLE(Id(2,i)) , 0.0
          ENDDO
+
+         write(logic, *) 'Vectors U Float'
+         do i = 1, numpnts
+            WRITE (Logic,'(3e15.6)') B(1,i) , B(2,i), B(3,i)
+         end do
          WRITE (Logic,*) 'CELL_DATA' , NUMel
          WRITE (Logic,*) 'SCALARS DB integer'
          WRITE (Logic,*) 'LOOKUP_TABLE default'
@@ -1229,6 +1234,12 @@
       DO n = 1 , NUMel
          WRITE (Logic,FMT='(5(1x,I7))') 5
       ENDDO
+      write(logic, *) 'Vectors U Float'
+      do i = 1, numpnts
+         WRITE (Logic,'(3e15.6)') B(1,i) , B(2,i), B(3,i)
+      end do
+
+      
       END SUBROUTINE DUMP_MESH
  
 !***************************************************************

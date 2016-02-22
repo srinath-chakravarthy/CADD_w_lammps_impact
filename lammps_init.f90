@@ -380,7 +380,9 @@ subroutine initialize_lammps(Id,X,Ix,F,B,Itx,lmp)
       !! ---- Dump data file 
       write(command_line, '(A18,I3,A86)') "dump 1 all custom ", lammps_output_steps, " atom_lmp*.cfg id type x y z c_dx_all[1] c_dx_all[2] vx vy vz c_dx_all[4] f_fix_temp"
       call lammps_command(lmp, command_line)
-
+!!$      write(command_line, '(A22,I3,A81)') "dump 2 all custom/vtk ", lammps_output_steps, " atom_lmp*.vtu id type x y z c_dx_all[1] c_dx_all[2] vx vy vz c_dx_all[4]"
+!!$      call lammps_command(lmp, command_line)
+      
       !!let lammps equilibrate for 10 picoseconds, then call indenter
       !!place this call in another subroutine called equilibrate lammps
       call lammps_command(lmp, "run 0")

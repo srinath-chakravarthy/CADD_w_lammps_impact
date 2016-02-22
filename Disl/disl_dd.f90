@@ -9,6 +9,7 @@
 !*--DISL_SETUP9
       CHARACTER*80 error_message
       I_Disl = 0
+      irmdisl = .false.
 !
 !      DATA I_Disl/0/
 !
@@ -34,19 +35,20 @@
       !!> Shift all arrays using idisl position 
       !!> Arays to update are burgers, burg_length, theta_e, theta_s
       !!>   r_disl, pk_stress, pk_force, disl_range, r_old, disl_residence
-     do j = idisl + 1, ndisl
-	burgers(1:2,j-1) = burgers(1:2, j)
-	BURg_length(j-1) = burg_length(j)
-	theta_e(j-1) = theta_e(j)
-	theta_s(j-1) = theta_s(j)
-	r_disl(:,j-1) = r_disl(:,j)
-	pk_stress(:,j-1) = pk_stress(:,j)
-	pk_force(:,j-1) = pk_force(:,j)
-	disl_range(:,j-1) = disl_range(:,j)
-	r_old(:,j-1) = r_old(:,j)
-	disl_residence(:,:,j-1) = disl_residence(:,:,j)
-     end do
-     ndisl = ndisl -1
+      do j = idisl + 1, ndisl
+         burgers(1:2,j-1) = burgers(1:2, j)
+         BURg_length(j-1) = burg_length(j)
+         theta_e(j-1) = theta_e(j)
+         theta_s(j-1) = theta_s(j)
+         r_disl(:,j-1) = r_disl(:,j)
+         pk_stress(:,j-1) = pk_stress(:,j)
+         pk_force(:,j-1) = pk_force(:,j)
+         disl_range(:,j-1) = disl_range(:,j)
+         r_old(:,j-1) = r_old(:,j)
+         disl_residence(:,:,j-1) = disl_residence(:,:,j)
+         irmdisl(j-1) = irmdisl(j)
+      end do
+      ndisl = ndisl -1
 !
       END SUBROUTINE DISL_REMOVE
  
