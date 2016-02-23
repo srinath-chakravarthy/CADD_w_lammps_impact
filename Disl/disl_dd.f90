@@ -283,6 +283,7 @@
 !
       DO i = 1 , NDIsl
          IF ( ELEm_disl(i)>0 ) THEN
+	    call print_element(ELEm_disl(i), rhs)
             CALL FE_STRESS(ELEm_disl(i),Rhs,PK_stress(1,i))
             DO j = 1 , NDIsl
                IF ( j/=i ) THEN

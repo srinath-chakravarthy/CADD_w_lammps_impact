@@ -569,6 +569,33 @@
       write(*,'(A,2(1X,2E15.6))') 'X-Y range for dislocation = ', xyrange(1,1:2), xyrange(2,1:2)
       
       END SUBROUTINE SLIPRANGE
+
+
+      subroutine print_element(lmn, rhs)
+            use mod_global
+            use mod_fem_parameters
+	    implicit none
+            double precision, intent(in) :: rhs(:)
+            integer, intent(in) :: lmn
+            integer :: i, j, mapped_node
+            write(*,'(A,I7,A,3I7)') 'Element is = ', lmn, ' nodes are ', iconn(1,lmn), iconn(2,lmn), iconn(3,lmn)
+            do i = 1, knode
+               write(*,'(A,I7,2F15.6)') 'Element coords are ',i, X0(1,iconn(i,lmn)), X0(2,iconn(i,lmn))
+               write(*,'(A,I7)', advance = 'no') 'Nodal displacements are ', i
+               do j = 1, ndof
+                  write(*,'(E15.6)', advance = 'no') Rhs((ICOnn(i,Lmn)-1)*NDOF+j)
+               end do
+               write(*,*)
+            end do
+            write(*,'(A,3I7)') 'Mapped element nodes are ',imap(iconn(1,lmn)), imap(iconn(2,lmn)), imap(iconn(3,lmn))
+!!$            do i = 1, knode
+!!$               mapped_node = imap(iconn(i,lmn))
+!!$               write(*,'(A,I7,2F15.6)') 'Mapped element coords are ',mapped_node, X(1, mapped_node), X(2,mapped_node)
+!!$               write(*,'(A,I7,2E15.6)') 'Mapped nodal displacements are ', i, B(1, mapped_node), B(2,mapped_node)
+!!$            end do
+      end subroutine print_element
+      
+      
  
 !
 !       $Log: fem_routines.f,v $

@@ -123,12 +123,9 @@
 !!$      CALL DOSTEPS(n,B,Dr,Db,ener,tolm,iprint,dsmax,rseed,dfn,Id,X,Ix,F,&
 !!$     &             Itx,.TRUE.,addedslip,lostslip,.TRUE.,.TRUE.)
 !!$
-!!$      write(*, '(A,3I7)')'IX before dosteps ==============================', ix(1,1), ix(2,1), ix(3,1)
-
       
       CALL DOSTEPS_lammps(n,B,Dr,Db,ener,tolm,iprint,dsmax,rseed,dfn,Id,X,Ix,F,&
      &             Itx,.TRUE.,addedslip,lostslip,.TRUE.,.TRUE.,lmp)
-!!$       write(*, '(A,3I7)')'IX  after fem_movepad ==============================', ix(1,1), ix(2,1), ix(3,1)
 
  
  
