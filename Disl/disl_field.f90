@@ -352,10 +352,12 @@
 !
       DO i = 1 , NDIsl
          IF ( ELEm_disl(i)>0 ) THEN
+!!$            if (disl_timer(i) >= time_static) then 
             CALL DISL_S(R_Disl(1,i),BURgers(1,i),R,s_temp,THEta_s(i))
             DO j = 1 , 3
                S_out(j) = S_out(j) + s_temp(j)
             ENDDO
+!!$            end if
          ENDIF
       ENDDO
       END SUBROUTINE DISL_STRESS

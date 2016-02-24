@@ -47,6 +47,7 @@
          r_old(:,j-1) = r_old(:,j)
          disl_residence(:,:,j-1) = disl_residence(:,:,j)
          irmdisl(j-1) = irmdisl(j)
+         disl_timer(j-1) = disl_timer(j)
       end do
       ndisl = ndisl -1
 !
@@ -132,6 +133,8 @@
      &                        +BURgers(2,NDIsl)*BURgers(2,NDIsl))
          THEta_e(NDIsl) = Th_e
          THEta_s(NDIsl) = Th_s
+         irmdisl(NDisl) = .false. 
+         disl_timer(NDISL) = 0
          PRINT * , 'In element: ' , ELEm_disl(NDIsl)
          IF ( ELEm_disl(NDIsl)/=0 ) then 
             CALL SLIPRANGE(Bv,R0,DISl_range(1,NDIsl),DISl_index(NDIsl), disl_residence(1:2,1:2,ndisl))
@@ -283,20 +286,23 @@
 !
       DO i = 1 , NDIsl
          IF ( ELEm_disl(i)>0 ) THEN
-	    call print_element(ELEm_disl(i), rhs)
+!!$	    call print_element(ELEm_disl(i), rhs)
             CALL FE_STRESS(ELEm_disl(i),Rhs,PK_stress(1,i))
-            write(*,'(A,I7,6E15.6)') 'Stress on disl = ', i, pk_stress(1:3,i), pk_stress(1:3,i)/1.602176/1.d-5
+!!$            write(*,'(A,I7,6E15.6)') 'Stress on disl = ', i, pk_stress(1:3,i), pk_stress(1:3,i)/1.602176/1.d-5
             DO j = 1 , NDIsl
                IF ( j/=i ) THEN
                   if (elem_disl(j) > 0) then 
-                     CALL DISL_S(R_Disl(1,j),BURgers(1,j),R_Disl(1,i),s_out,THEta_s(j))
-                     DO k = 1 , 3
-                        PK_stress(k,i) = PK_stress(k,i) + s_out(k)
-                     ENDDO
-                  end if
+!!$ 		     Only include contribution of actual dislocations that can move 
+!!$		     if (disl_timer(j) >= time_static) then 
+			CALL DISL_S(R_Disl(1,j),BURgers(1,j),R_Disl(1,i),s_out,THEta_s(j))
+			DO k = 1 , 3
+			    PK_stress(k,i) = PK_stress(k,i) + s_out(k)
+			ENDDO
+!!$		    end if
+		  end if
                ENDIF
             ENDDO
-            write(*,'(A,I7,6E15.6)') 'Stress on disl total = ', i, pk_stress(1:3,i), pk_stress(1:3,i)/1.602176/1.d-5
+!!$            write(*,'(A,I7,6E15.6)') 'Stress on disl total = ', i, pk_stress(1:3,i), pk_stress(1:3,i)/1.602176/1.d-5
          ENDIF
       ENDDO
  

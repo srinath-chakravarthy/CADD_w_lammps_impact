@@ -74,6 +74,20 @@ SUBROUTINE FEM_MOVE_PAD(X,B,Ix,Bc,Prop,Cz,Id,Is_relaxed,E_out,&
       IF ( Movedisl ) THEN
          CALL FD_PEACH_KOELLER(rhs)
          call move_dis(10.0,MDTemp)
+        print *, "Stress and displacement before fullfield ------------------------------------"
+! 	if (ndisl < 1) then 
+! 	  CALL FE_STRESS(11738,Rhs,pks)
+! 	    call print_element(11738, rhs, B)
+! 	    write(*,'(A,I7,6E15.6)') 'Stress in elem = ', i, pks(1:3), pk_stress(1:3,i)/1.602176/1.d-5
+! 	end if
+! 	do i = 1, ndisl
+! 	  if (elem_disl(i) > 0) then 
+! 	    CALL FE_STRESS(ELEm_disl(i),Rhs,pks)
+! 	    call print_element(ELEm_disl(i), rhs, B)
+! 	    write(*,'(A,I7,6E15.6)') 'Stress on disl = ', i, pks(1:3), pk_stress(1:3,i)/1.602176/1.d-5
+! 	  end if
+! 	end do
+
 !!$         IF ( NDIsl>0 ) THEN
 !!$            IF ( Ifem==1 ) THEN
 !!$               PRINT * , ' --- Entering Move Disl --'
@@ -114,18 +128,18 @@ SUBROUTINE FEM_MOVE_PAD(X,B,Ix,Bc,Prop,Cz,Id,Is_relaxed,E_out,&
 !!$!       update b so b=u_hat+u_tilda
       IF ( Fullfield ) then 
 	CALL FD_FULL_FIELD(rhs,B)
-	if (ndisl < 1) then 
-	  CALL FE_STRESS(11738,Rhs,pks)
-	    call print_element(11738, rhs, B)
-	    write(*,'(A,I7,6E15.6)') 'Stress on disl = ', i, pks(1:3), pk_stress(1:3,i)/1.602176/1.d-5
-	end if
-	do i = 1, ndisl
-	  if (elem_disl(i) > 0) then 
-	    CALL FE_STRESS(ELEm_disl(i),Rhs,pks)
-	    call print_element(ELEm_disl(i), rhs, B)
-	    write(*,'(A,I7,6E15.6)') 'Stress on disl = ', i, pks(1:3), pk_stress(1:3,i)/1.602176/1.d-5
-	  end if
-	end do
+! 	if (ndisl < 1) then 
+! 	  CALL FE_STRESS(11738,Rhs,pks)
+! 	    call print_element(11738, rhs, B)
+! 	    write(*,'(A,I7,6E15.6)') 'Stress in elem = ', i, pks(1:3), pk_stress(1:3,i)/1.602176/1.d-5
+! 	end if
+! 	do i = 1, ndisl
+! 	  if (elem_disl(i) > 0) then 
+! 	    CALL FE_STRESS(ELEm_disl(i),Rhs,pks)
+! 	    call print_element(ELEm_disl(i), rhs, B)
+! 	    write(*,'(A,I7,6E15.6)') 'Stress on disl = ', i, pks(1:3), pk_stress(1:3,i)/1.602176/1.d-5
+! 	  end if
+! 	end do
       ENDIF
 !!$!       compute total strain energy of fem region
       CALL FE_STRESS_CHECK(rhs,Straine0)
@@ -247,6 +261,7 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
 !!!!    end of hacked parameters
  
       DO i = 1 , NDIsl
+	 disl_timer(i) = disl_timer(i) + 1
          IF ( ELEm_disl(i) > 0 ) THEN
 	    rold = R_disl(1:2,i)
             !!$PK_f(i) = (PK_force(1,i)*BURgers(1,i)+PK_force(2,i)*BURgers(2,i))/BURg_length(i)
@@ -261,26 +276,14 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
 	    velocity = Pk_f(i)/mobility
 	    if (abs(velocity) > max_vel) velocity = sign(max_vel, velocity)
 	    deltas = velocity * time_step_con
+	    if (disl_timer(i) < time_static) then 
+		deltas = 0.0
+		print *, 'Dislocation ', i, ' is held at its position'
+	    end if
 !!$            IF ( ABS(PK_f(i)*mobility)>max_vel ) PK_f(i) = max_vel/mobility*PK_f(i)/ABS(PK_f(i))
             write(*,'(A,I5,2F15.6,1X,4F15.6)') 'old disl pos = ',i, r_disl(1, i), r_disl(2, i), burgers(1:2,i), velocity, deltas
-!            write(*,*) i,' total disl force = ',pk_f(i)
-!            if(r_disl(2,i).gt.-100.0.or.pk_f(i).gt.0.0) then
-!!$            IF ( R_Disl(2,i)<=min_pos .OR. PK_f(i)<0.0 ) THEN
 	      R_disl(1,i) = R_disl(1,i) + deltas*BURgers(1,i)/BURg_length(i)
 	      R_disl(2,i) = R_disl(2,i) + deltas*BURgers(2,i)/BURg_length(i)
-!!$               R_Disl(1,i) = R_Disl(1,i) + mobility*PK_f(i)*BURgers(1,i)/BURg_length(i)
-!!$               R_Disl(2,i) = R_Disl(2,i) + mobility*PK_f(i)*BURgers(2,i)/BURg_length(i)
-	       !! Hack to prevent dislocations from moving back for the impact problem
-	       ! --- Dislocation y is either the same or moving back 
-	       ! --- Absolute y coord of dislocation 
-!!$	       if (abs(R_disl(2,i)) - abs(rold(2)) < 1.d-6) then 
-!!$		if (abs(R_disl(1,i)) - abs(rold(1)) < 1.d-6) then 
-!!$		    write(*,'(A,I5,A)') 'Preventing Dislocation ', i, ' from moving back'
-!!$		    R_disl(1:2,i) = rold + 0.1d0*sign(1.0d0, PK_f(i))*BURgers(1:2,i)/Burg_length(i)
-!!$		end if 
-!!$	       end if
-!!$            ENDIF
-!            endif
             WRITE (*,'(A,I5,2F15.6,1X,2F15.6)') 'new disl pos = ' , i, R_Disl(1,i) , R_Disl(2,i), burgers(1:2,i)
             write(*,*) ' '
             elem_old = ELEm_disl(i)

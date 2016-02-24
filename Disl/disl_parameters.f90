@@ -50,10 +50,12 @@
       DOUBLE PRECISION :: disl_range(2,MAX_DISL) , r_old(3,MAX_DISL)
       DOUBLE PRECISION :: disl_residence(2,2,MAX_disl) !> @var containing both x and y coordinates for range of dislocation
       DOUBLE PRECISION :: disl_line(3,MAX_DISL), disl_image(MAX_disl)
+      INTEGER :: disl_timer(MAX_DISL)
       LOGICAL :: irmdisl(MAX_DISL)
+      
       LOGICAL MOVedisl1
       COMMON /KMVDIS/ MOVedisl1
- 
+      INTEGER, PARAMETER :: time_static = 20
  
       END MODULE MOD_DISL_PARAMETERS
  

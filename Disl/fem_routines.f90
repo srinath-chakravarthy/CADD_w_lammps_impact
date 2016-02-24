@@ -214,6 +214,8 @@
 !
       DO i = 1 , NFIxed
          IF ( Is_relaxed(IMAp(IFIx_hold(2,i)))==2 ) THEN
+	     !!$write(*,'(A,2I7,E15.6)') 'Fixed atom bc = ', IFIx_hold(1,i),IMAp(IFIx_hold(2,i)), & 
+	     !!$B(IFIx_hold(1,i),IMAp(IFIx_hold(2,i)))
             presv(i) = B(IFIx_hold(1,i),IMAp(IFIx_hold(2,i)))
          ELSE
             presv(i) = Prop*Bc(IFIx_hold(1,i),IMAp(IFIx_hold(2,i)))
@@ -579,20 +581,22 @@
             double precision, optional :: b(3,*)
             integer :: i, j, mapped_node
             write(*,'(A,I7,A,3I7)') 'Element is = ', lmn, ' nodes are ', iconn(1,lmn), iconn(2,lmn), iconn(3,lmn)
+            write(*,'(A)',advance ='no')'Nodal displacements are '
             do i = 1, knode
-               write(*,'(A,I7,2F15.6)') 'Element coords are ',i, X0(1,iconn(i,lmn)), X0(2,iconn(i,lmn))
-               write(*,'(A,I7)', advance = 'no') 'Nodal displacements are ', i
+               write(*,'(I7)', advance = 'no')  i
                do j = 1, ndof
                   write(*,'(E15.6)', advance = 'no') Rhs((ICOnn(i,Lmn)-1)*NDOF+j)
                end do
-               write(*,*)
             end do
+	    write(*,*)
             write(*,'(A,3I7)') 'Mapped element nodes are ',imap(iconn(1,lmn)), imap(iconn(2,lmn)), imap(iconn(3,lmn))
             if (present(b)) then 
+	      write(*,'(A)',advance = 'no') 'Mapped nodal displacements are '
 	      do i = 1, knode
 		mapped_node = imap(iconn(i,lmn))
-		write(*,'(A,I7,2E15.6)') 'Mapped nodal displacements are ', i, B(1, mapped_node), B(2,mapped_node)
+		write(*,'(I7,2E15.6)', advance = 'no') i, B(1, mapped_node), B(2,mapped_node)
 	      end do
+	      write(*,*)
 	    end if
       end subroutine print_element
       

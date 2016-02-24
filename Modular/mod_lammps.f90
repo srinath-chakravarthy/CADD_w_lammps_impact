@@ -300,6 +300,7 @@ contains
              if (isRelaxed(iAtom) == 2) then 
                 AveDispl(1, iatom) = compute_lammps_avg_dx(lmpatom)
                 AveDispl(2, iatom) = compute_lammps_avg_dy(lmpatom)
+                !!$write(*,'(A,I7,2F15.6)') 'Average interface displacement =', iatom, AveDispl(1:2,iatom)
              else
                 AveDispl(1:2, iatom) = AtomDispl(1:2,iatom)
 
