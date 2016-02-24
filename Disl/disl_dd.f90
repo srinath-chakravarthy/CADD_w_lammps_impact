@@ -285,15 +285,18 @@
          IF ( ELEm_disl(i)>0 ) THEN
 	    call print_element(ELEm_disl(i), rhs)
             CALL FE_STRESS(ELEm_disl(i),Rhs,PK_stress(1,i))
+            write(*,'(A,I7,6E15.6)') 'Stress on disl = ', i, pk_stress(1:3,i), pk_stress(1:3,i)/1.602176/1.d-5
             DO j = 1 , NDIsl
                IF ( j/=i ) THEN
-                  CALL DISL_S(R_Disl(1,j),BURgers(1,j),R_Disl(1,i),s_out,THEta_s(j))
-                  DO k = 1 , 3
-!$$$  write(*,*) ' pk_stress', pk_stress(k,i)
-                     PK_stress(k,i) = PK_stress(k,i) + s_out(k)
-                  ENDDO
+                  if (elem_disl(j) > 0) then 
+                     CALL DISL_S(R_Disl(1,j),BURgers(1,j),R_Disl(1,i),s_out,THEta_s(j))
+                     DO k = 1 , 3
+                        PK_stress(k,i) = PK_stress(k,i) + s_out(k)
+                     ENDDO
+                  end if
                ENDIF
             ENDDO
+            write(*,'(A,I7,6E15.6)') 'Stress on disl total = ', i, pk_stress(1:3,i), pk_stress(1:3,i)/1.602176/1.d-5
          ENDIF
       ENDDO
  

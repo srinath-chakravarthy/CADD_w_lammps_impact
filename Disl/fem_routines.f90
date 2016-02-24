@@ -571,12 +571,12 @@
       END SUBROUTINE SLIPRANGE
 
 
-      subroutine print_element(lmn, rhs)
-            use mod_global
+      subroutine print_element(lmn, rhs, b)
             use mod_fem_parameters
 	    implicit none
-            double precision, intent(in) :: rhs(:)
+            double precision :: rhs(*)
             integer, intent(in) :: lmn
+            double precision, optional :: b(3,*)
             integer :: i, j, mapped_node
             write(*,'(A,I7,A,3I7)') 'Element is = ', lmn, ' nodes are ', iconn(1,lmn), iconn(2,lmn), iconn(3,lmn)
             do i = 1, knode
@@ -588,11 +588,12 @@
                write(*,*)
             end do
             write(*,'(A,3I7)') 'Mapped element nodes are ',imap(iconn(1,lmn)), imap(iconn(2,lmn)), imap(iconn(3,lmn))
-!!$            do i = 1, knode
-!!$               mapped_node = imap(iconn(i,lmn))
-!!$               write(*,'(A,I7,2F15.6)') 'Mapped element coords are ',mapped_node, X(1, mapped_node), X(2,mapped_node)
-!!$               write(*,'(A,I7,2E15.6)') 'Mapped nodal displacements are ', i, B(1, mapped_node), B(2,mapped_node)
-!!$            end do
+            if (present(b)) then 
+	      do i = 1, knode
+		mapped_node = imap(iconn(i,lmn))
+		write(*,'(A,I7,2E15.6)') 'Mapped nodal displacements are ', i, B(1, mapped_node), B(2,mapped_node)
+	      end do
+	    end if
       end subroutine print_element
       
       

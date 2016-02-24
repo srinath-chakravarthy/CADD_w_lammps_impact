@@ -50,7 +50,7 @@ SUBROUTINE FEM_MOVE_PAD(X,B,Ix,Bc,Prop,Cz,Id,Is_relaxed,E_out,&
       CHARACTER*80 error_message
       LOGICAL centraldiff , forwarddiff , backdiff
       LOGICAL changetime
-
+      double precision :: pks(3)
 
 !!$!      print *, 'Ifem in fem_move_pad is', iFem
       IF ( I_Flag/=1 ) THEN
@@ -73,6 +73,7 @@ SUBROUTINE FEM_MOVE_PAD(X,B,Ix,Bc,Prop,Cz,Id,Is_relaxed,E_out,&
 !!$!  compute the P.-K. force on dislocations
       IF ( Movedisl ) THEN
          CALL FD_PEACH_KOELLER(rhs)
+         call move_dis(10.0,MDTemp)
 !!$         IF ( NDIsl>0 ) THEN
 !!$            IF ( Ifem==1 ) THEN
 !!$               PRINT * , ' --- Entering Move Disl --'
@@ -105,14 +106,27 @@ SUBROUTINE FEM_MOVE_PAD(X,B,Ix,Bc,Prop,Cz,Id,Is_relaxed,E_out,&
       E_out = e0*Cz
 
 !!$!       move dislocations based on P.-K. force
-      if(MoveDisl) call move_dis(10.0,MDTemp)
+!!$      if(MoveDisl) call move_dis(10.0,MDTemp)
 
 !!$!       move pad atoms according to tilda and hat fields
       CALL FD_MOVEPAD(X,rhs,B)
 
 !!$!       update b so b=u_hat+u_tilda
-      IF ( Fullfield ) CALL FD_FULL_FIELD(rhs,B)
-
+      IF ( Fullfield ) then 
+	CALL FD_FULL_FIELD(rhs,B)
+	if (ndisl < 1) then 
+	  CALL FE_STRESS(11738,Rhs,pks)
+	    call print_element(11738, rhs, B)
+	    write(*,'(A,I7,6E15.6)') 'Stress on disl = ', i, pks(1:3), pk_stress(1:3,i)/1.602176/1.d-5
+	end if
+	do i = 1, ndisl
+	  if (elem_disl(i) > 0) then 
+	    CALL FE_STRESS(ELEm_disl(i),Rhs,pks)
+	    call print_element(ELEm_disl(i), rhs, B)
+	    write(*,'(A,I7,6E15.6)') 'Stress on disl = ', i, pks(1:3), pk_stress(1:3,i)/1.602176/1.d-5
+	  end if
+	end do
+      ENDIF
 !!$!       compute total strain energy of fem region
       CALL FE_STRESS_CHECK(rhs,Straine0)
 
@@ -201,12 +215,14 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
       DOUBLE PRECISION ddis
       double precision :: ev_convert1
       CHARACTER*80 error_message
-      double precision :: Rold(2), dist_dis
+      double precision :: Rold(2), dist_dis, pks(3)
+!!$   New dd parameters 
+      double precision :: velocity
 
 !
 !!!!    hacked parameters
       min_pos = -10.0
-      time_step_con = 5.0E-4
+      time_step_con = 20.0d0*1.0e-15;
 !C--Jun Song: make sure temperature>0.0
       IF ( Temperature<0.0D0 ) THEN
          WRITE (*,*) "Temperature less than Zero!!!"
@@ -215,19 +231,26 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
  
 !C--JS: 6.242e-2 is unit conversion constant. Do not change
 !C--Change the stacking fault E for different materials
-      mobility = time_step_con/(6.242E-2*5.0E-8*Temperature)
+      !!mobility = time_step_con/(6.242E-2*5.0E-8*Temperature)
+      if (temperature < 1.0d0) then 
+	temperature = 1.0d0
+      end if
+      mobility = 5.0d-8/(160.217648d9)*temperature
+      
         ! 3rd parameter (5.0e-8) is damp coef from Olmstead paper
         ! "Atomistic simulations of dislocation mobility.."
-      max_vel = time_step_con*2000.0
-      sf_f = .089*6.242E-2 ! sf energy in J/m2,i.e., 0.089
-      !!!sf_f = 0.0d0 ! hex al no stacking fault eneregy
+        max_vel = 2000.d0*1e10 !> A/s 
+        
+!!$      max_vel = time_step_con*2000.0
+!!$      sf_f = .089*6.242E-2 ! sf energy in J/m2,i.e., 0.089
+	sf_f = 0.0d0 ! hex al no stacking fault eneregy
 !!!!    end of hacked parameters
  
       DO i = 1 , NDIsl
          IF ( ELEm_disl(i) > 0 ) THEN
 	    rold = R_disl(1:2,i)
-            PK_f(i) = (PK_force(1,i)*BURgers(1,i)+PK_force(2,i)&
-     &                *BURgers(2,i))/BURg_length(i)
+            !!$PK_f(i) = (PK_force(1,i)*BURgers(1,i)+PK_force(2,i)*BURgers(2,i))/BURg_length(i)
+            pks = pk_stress(1:3,i)
 !            write(*,*) i,' non sf disl force = ',pk_f(i)
             ddis = SQRT(R_Disl(1,i)**2+R_Disl(2,i)**2)
             if (isnan(PK_f(i))) then 
@@ -235,24 +258,28 @@ SUBROUTINE MOVE_DIS(Alpha,Temperature)
 	    end if
             PK_f(i) = PK_f(i) + sf_f
 !!!!        upper limit on velocities
-            IF ( ABS(PK_f(i)*mobility)>max_vel ) PK_f(i)&
-     &           = max_vel/mobility*PK_f(i)/ABS(PK_f(i))
-            write(*,'(A,I5,2F15.6,1X,2F15.6)') 'old disl pos = ',i, r_disl(1, i), r_disl(2, i), burgers(1:2,i)
+	    velocity = Pk_f(i)/mobility
+	    if (abs(velocity) > max_vel) velocity = sign(max_vel, velocity)
+	    deltas = velocity * time_step_con
+!!$            IF ( ABS(PK_f(i)*mobility)>max_vel ) PK_f(i) = max_vel/mobility*PK_f(i)/ABS(PK_f(i))
+            write(*,'(A,I5,2F15.6,1X,4F15.6)') 'old disl pos = ',i, r_disl(1, i), r_disl(2, i), burgers(1:2,i), velocity, deltas
 !            write(*,*) i,' total disl force = ',pk_f(i)
 !            if(r_disl(2,i).gt.-100.0.or.pk_f(i).gt.0.0) then
-            IF ( R_Disl(2,i)<=min_pos .OR. PK_f(i)<0.0 ) THEN
-               R_Disl(1,i) = R_Disl(1,i) + mobility*PK_f(i)*BURgers(1,i)/BURg_length(i)
-               R_Disl(2,i) = R_Disl(2,i) + mobility*PK_f(i)*BURgers(2,i)/BURg_length(i)
+!!$            IF ( R_Disl(2,i)<=min_pos .OR. PK_f(i)<0.0 ) THEN
+	      R_disl(1,i) = R_disl(1,i) + deltas*BURgers(1,i)/BURg_length(i)
+	      R_disl(2,i) = R_disl(2,i) + deltas*BURgers(2,i)/BURg_length(i)
+!!$               R_Disl(1,i) = R_Disl(1,i) + mobility*PK_f(i)*BURgers(1,i)/BURg_length(i)
+!!$               R_Disl(2,i) = R_Disl(2,i) + mobility*PK_f(i)*BURgers(2,i)/BURg_length(i)
 	       !! Hack to prevent dislocations from moving back for the impact problem
 	       ! --- Dislocation y is either the same or moving back 
 	       ! --- Absolute y coord of dislocation 
-	       if (abs(R_disl(2,i)) - abs(rold(2)) < 1.d-6) then 
-		if (abs(R_disl(1,i)) - abs(rold(1)) < 1.d-6) then 
-		    write(*,'(A,I5,A)') 'Preventing Dislocation ', i, ' from moving back'
-		    R_disl(1:2,i) = rold + 0.1d0*sign(1.0d0, PK_f(i))*BURgers(1:2,i)/Burg_length(i)
-		end if 
-	       end if
-            ENDIF
+!!$	       if (abs(R_disl(2,i)) - abs(rold(2)) < 1.d-6) then 
+!!$		if (abs(R_disl(1,i)) - abs(rold(1)) < 1.d-6) then 
+!!$		    write(*,'(A,I5,A)') 'Preventing Dislocation ', i, ' from moving back'
+!!$		    R_disl(1:2,i) = rold + 0.1d0*sign(1.0d0, PK_f(i))*BURgers(1:2,i)/Burg_length(i)
+!!$		end if 
+!!$	       end if
+!!$            ENDIF
 !            endif
             WRITE (*,'(A,I5,2F15.6,1X,2F15.6)') 'new disl pos = ' , i, R_Disl(1,i) , R_Disl(2,i), burgers(1:2,i)
             write(*,*) ' '
