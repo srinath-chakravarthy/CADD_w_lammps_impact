@@ -1404,7 +1404,7 @@
  
  
       INTEGER next , NMAX , ifound , iel , j , i , n1 , n2 , jp1 , iring
-      PARAMETER (NMAX=1200)
+      PARAMETER (NMAX=1600)
       LOGICAL found
       DOUBLE PRECISION d1 , dmin , vec(2)
       INTEGER , ALLOCATABLE :: nn(:) , neigh(:,:)

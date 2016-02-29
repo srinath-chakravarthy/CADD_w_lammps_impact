@@ -419,6 +419,9 @@
 !     Triangulate, sets all elements to material 1 for this mesh
       PRINT * , 'Triangulating'
       numnpc = NUMnp
+      NCE = 0
+      NCB = 0
+      ELIST = 0
       CALL DELAUNAY(Id,X,Ix,F,B,Itx)
       PRINT * , 'Done'
 
@@ -755,13 +758,13 @@
       CALL ALLOCATE_DB
 
       DO i = 1 , NDBpoly
-         detectionband%XMIN = atomregion%XMIN + rcutmesh + (i-1)*dx + 10.0
+         detectionband%XMIN = atomregion%XMIN + rcutmesh + (i-1)*dx + 15.0
 !!$         detectionBand%xmax = atomRegion%xmax - 2.0*rcutmesh
 !!$         detectionBand%ymin = atomRegion%ymin + 2.0*rcutmesh
 !!$         detectionBand%ymax = atomRegion%ymax - 2.0*rcutmesh
 
-         detectionband%xmax = atomregion%xmax - rcutmesh - (i-1)*dx - 10.0
-         detectionband%YMIN = atomregion%YMIN + rcutmesh + (i-1)*dy + 10.0
+         detectionband%xmax = atomregion%xmax - rcutmesh - (i-1)*dx - 15.0
+         detectionband%YMIN = atomregion%YMIN + rcutmesh + (i-1)*dy + 15.0
 !!$         detectionband%ymax = atomregion%ymax - rcutmesh -
          !(i-1)*dy
 		 detectionband%ymax = 0.1

@@ -96,7 +96,11 @@
          ELEm_disl(NDIsl) = FE_LOCATE(R0,1)
 !
  
+	    
          DO i = 1 , 3
+	    if (R0(2) > -2.0d0) then
+		Elem_disl(Ndisl) = 0
+	    end if	
             R_Disl(i,NDIsl) = R0(i)
          ENDDO
          IF ( ELEm_disl(NDIsl)>0 ) THEN
