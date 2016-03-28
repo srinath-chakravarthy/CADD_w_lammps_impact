@@ -43,6 +43,7 @@ subroutine write_lammps_data(Id, X, Ix, F, B, Itx, xmin, xmax, ymin, ymax)
       READ (200,*) particle_velocity
       READ (200,*) particle_radius
       READ (200,*) particle_height
+      READ (200,*) particle_rotation
 
 !       write(*,'(A)') 'Lammps md paramters'
 !       write(*,'(A, F15.6, 4(1X,I1))') 'Stadium parameter = ', stadium_width, exclude_top, exclude_bot, exclude_left, exclude_right
@@ -216,7 +217,7 @@ subroutine initialize_lammps(Id,X,Ix,F,B,Itx,lmp)
       DIMENSION Id(NDF,1) , X(NXDm,1) , Ix(NEN1,1) , F(NDF,1) , B(NDF,1)
 !!$        double precision, intent(in) :: xmin, xmax, ymin, ymax, padwidth
 
-      double precision :: zmin, zmax
+      double precision :: zmin, zmax, theta
       character(1024):: command_line
       integer :: iatom, i,j,k,l
       integer :: num_threads
@@ -237,8 +238,8 @@ subroutine initialize_lammps(Id,X,Ix,F,B,Itx,lmp)
       write(*,'(A, F15.3)') 'Time Step = ', lammps_timestep/1.e-12
       write(*,'(A, 5I7)') 'Steps (Update, mdsteps, output, restart, initial) = ', fem_update_steps,  & 
 		num_md_steps, lammps_output_steps, num_restart_steps, num_initial_equil
-      write(*, '(A, 3F15.3)') 'Particle paramters (velocity, radius, height) = ', &
-		particle_velocity, particle_radius, particle_height
+      write(*, '(A, 3F15.3)') 'Particle paramters (velocity, radius, height, rotation) = ', &
+		particle_velocity, particle_radius, particle_height, particle_rotation
 
 !!$        call lammps_open_no_mpi('lmg -log log.CADD', lmp)
 !!$     If replacing this entire subroutine by reading input file
@@ -281,7 +282,12 @@ subroutine initialize_lammps(Id,X,Ix,F,B,Itx,lmp)
       !! --- creating particle atoms, type 5---
       call lammps_command(lmp, 'create_atoms 5 region 1')   
       call lammps_command(lmp, 'group particle_atoms type 5')
-
+      
+      !! --- add in for particle rotation by theta degrees ---
+      theta = particle_rotation
+      write(command_line,'(A,1F9.3,A,1F9.3,A)') 'displace_atoms particle_atoms rotate 0.0 ', particle_height + particle_radius, ' 0.0 0 0 1 ', theta, ' units box'
+      call lammps_command(lmp, command_line)      
+      
       !! --- Create groups of atoms for fixes and computes ----
       
       !!call lammps_command(lmp, "group md_atoms type 1 3 4")
