@@ -44,6 +44,7 @@ subroutine write_lammps_data(Id, X, Ix, F, B, Itx, xmin, xmax, ymin, ymax)
       READ (200,*) particle_radius
       READ (200,*) particle_height
       READ (200,*) particle_rotation
+      READ (200,*) impact_angle
 
 !       write(*,'(A)') 'Lammps md paramters'
 !       write(*,'(A, F15.6, 4(1X,I1))') 'Stadium parameter = ', stadium_width, exclude_top, exclude_bot, exclude_left, exclude_right
@@ -217,11 +218,13 @@ subroutine initialize_lammps(Id,X,Ix,F,B,Itx,lmp)
       DIMENSION Id(NDF,1) , X(NXDm,1) , Ix(NEN1,1) , F(NDF,1) , B(NDF,1)
 !!$        double precision, intent(in) :: xmin, xmax, ymin, ymax, padwidth
 
-      double precision :: zmin, zmax, theta
+      double precision :: zmin, zmax, theta, xoffset, Pi, ia_rad
       character(1024):: command_line
       integer :: iatom, i,j,k,l
       integer :: num_threads
       integer :: omp_get_num_threads
+      
+      DATA Pi/3.1415927/
 
       real (C_double), pointer :: xlo => NULL()
       real (C_double), pointer :: xhi => NULL()
@@ -238,8 +241,8 @@ subroutine initialize_lammps(Id,X,Ix,F,B,Itx,lmp)
       write(*,'(A, F15.3)') 'Time Step = ', lammps_timestep/1.e-12
       write(*,'(A, 5I7)') 'Steps (Update, mdsteps, output, restart, initial) = ', fem_update_steps,  & 
 		num_md_steps, lammps_output_steps, num_restart_steps, num_initial_equil
-      write(*, '(A, 3F15.3)') 'Particle paramters (velocity, radius, height, rotation) = ', &
-		particle_velocity, particle_radius, particle_height, particle_rotation
+      write(*, '(A, 3F15.3)') 'Particle paramters (velocity, radius, height, rotation, impact angle) = ', &
+		particle_velocity, particle_radius, particle_height, particle_rotation, impact_angle
 
 !!$        call lammps_open_no_mpi('lmg -log log.CADD', lmp)
 !!$     If replacing this entire subroutine by reading input file
@@ -273,9 +276,20 @@ subroutine initialize_lammps(Id,X,Ix,F,B,Itx,lmp)
       !!JM *** Create particle above free surface ***
       !!JM *** must be within simulation box as defined by yparticle ***
       !!JM *** in write_lammps_data subroutine above ***
-      write(command_line,'(A,2F15.3,A)') 'region 1 cylinder z 0.0 ', &
+      if (impact_angle /= 0.0) then
+        ia_rad = impact_angle/180.0*Pi
+        xoffset = -particle_height/TAN(ia_rad)
+        print*, 'particle_height is: ', particle_height
+        print*, 'TAN(ia_rad): ', TAN(ia_rad)
+        print*, 'xoffset is: ', xoffset
+        write(command_line,'(A,3F15.3,A)') 'region 1 cylinder z ', &
+           xoffset, particle_height + particle_radius, particle_radius, ' 0.0 0.1 units box'
+        call lammps_command(lmp, command_line)
+      else
+        write(command_line,'(A,2F15.3,A)') 'region 1 cylinder z 0.0 ', &
            particle_height + particle_radius, particle_radius, ' 0.0 0.1 units box'
-      call lammps_command(lmp, command_line)
+        call lammps_command(lmp, command_line)       
+      end if
       
 !!$      call lammps_command(lmp, 'region 1 cylinder z 0.0 120.0 100.0 0.0 0.1 units box')
 
@@ -425,10 +439,13 @@ subroutine add_fix_lammps(lmp, velocity)
       !!> impact studies post equilibrate_lammps
 
       use lammps
+      use MOD_GLOBAL
 
       implicit none
 
-      double precision :: velocity
+      double precision :: velocity, ia_rad, vx, vy, Pi
+      DATA Pi/3.1415927/
+      
       type (c_ptr) :: lmp
 
       character(1024):: command_line
@@ -442,8 +459,18 @@ subroutine add_fix_lammps(lmp, velocity)
 !!$        call lammps_command(lmp, "velocity particle_atoms set NULL -1842.98 NULL sum yes units box")
 
 !!$     using KSR: 500 m/s for 15 um radius particle...equivalent velocity for 100 nm particle
-      write(command_line, '(A,F15.6,A)') 'velocity particle_atoms set NULL ', velocity, ' NULL sum yes units box'
-      call lammps_command(lmp, command_line)
+      if (impact_angle /= 0) then
+        ia_rad = impact_angle/180.0*Pi
+        vx = -velocity*COS(ia_rad)
+        vy = velocity*SIN(ia_rad)
+        print*, 'vx is: ', vx
+        print*, 'vy is: ', vy
+        write(command_line, '(A,2F15.6,A)') 'velocity particle_atoms set ', vx, vy, ' NULL sum yes units box'
+        call lammps_command(lmp, command_line)
+      else
+        write(command_line, '(A,F15.6,A)') 'velocity particle_atoms set NULL ', velocity, ' NULL sum yes units box'
+        call lammps_command(lmp, command_line)        
+      end if
 !!$      call lammps_command(lmp, "velocity particle_atoms set NULL -50.0 NULL sum yes units box")
 
 
