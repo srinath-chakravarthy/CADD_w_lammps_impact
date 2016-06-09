@@ -205,6 +205,7 @@
       double precision :: particle_radius   !!$> @var particle radius (Angstrom), <= (xmax - xmin)/2.0 and (ymax-ymin)/2.0
       double precision :: particle_height   !!$> @var particle initial height above top surface (Angstrom)
       double precision :: particle_rotation !!$> @var particle rotation for different impact orientations
+      double precision :: impact_angle      !!$> @var impact angle of particle with substrate
 
 
 
